@@ -7,27 +7,22 @@ import os
 from datetime import UTC, datetime
 from typing import Literal, cast
 
-from composio import Composio
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
-from langgraph.runtime import Runtime
 
-from react_agent.context import Context
-from react_agent.state import InputState, State
-from react_agent.tools import fetch_tools
-from react_agent.prompts import SYSTEM_PROMPT
-from react_agent.utils import load_chat_model
+from agent_builder.state import InputState, State
+from agent_builder.tools import fetch_tools
+from agent_builder.prompts import SYSTEM_PROMPT
 
 load_dotenv()
 
 TOOLS = run(fetch_tools())
 
 async def call_model(
-    state: State, runtime: Runtime[Context]
+    state: State
 ) -> dict[str, list[AIMessage]]:
     """Call the LLM powering our "agent".
 
