@@ -2,12 +2,17 @@
 name = "composio-hack"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.12"
+requires-python = "==3.12.*"
 dependencies = [
     "composio>=0.8.20",
+    "db-sqlite3>=0.0.1",
     "dotenv>=0.9.9",
+    "fastapi[standard]>=0.119.0",
     "langchain>=0.3.27",
     "langchain-google-genai>=2.1.12",
     "langchain-mcp-adapters>=0.1.11",
     "langgraph>=0.6.10",
+    "langgraph-checkpoint-sqlite>=2.0.11",
+    "sqlalchemy>=2.0.44",
+    "structlog>=25.4.0",
 ]
