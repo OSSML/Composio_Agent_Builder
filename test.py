@@ -1,7 +1,7 @@
 import asyncio
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
-from react_agent.graph import graph, InputState
+from agent_builder.graph import graph, InputState
 
 load_dotenv()
 
