@@ -26,7 +26,6 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-
 @router.post("/chat/new", response_model=Thread)
 async def create_chat(
     request: ThreadCreate,

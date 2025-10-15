@@ -16,6 +16,7 @@ import structlog
 from agent_builder.tools import fetch_tools
 from src.misc.active_runs import active_runs
 from src.api.chat_routes import router as chat_routes
+from src.api.assistant_routes import router as assistant_routes
 from src.core.database import db_manager
 
 logger = structlog.getLogger(__name__)
@@ -82,7 +83,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(chat_routes, prefix="/api", tags=["ai"])
+app.include_router(chat_routes, prefix="/api", tags=["chats"])
+app.include_router(assistant_routes, prefix="/api", tags=["assistants"])
 
 @app.get("/")
 async def root():
