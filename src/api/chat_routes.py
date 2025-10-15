@@ -194,7 +194,9 @@ async def chat_search(
         stmt = stmt.where(ThreadORM.status == request.status)
 
     if request.metadata:
-        stmt = stmt.where(ThreadORM.metadata_json.op("@>")(request.metadata))
+        # For each key/value, filter JSONB field
+        for key, value in request.metadata.items():
+            stmt = stmt.where(ThreadORM.metadata_json[key].as_string() == str(value))
 
     # Count total first
     _count_result = await session.scalars(stmt)
@@ -285,7 +287,7 @@ async def create_run(
     # Mark thread as busy and update metadata with assistant/graph info
     await set_thread_status(session, thread_id, "busy")
     await update_thread_metadata(
-        session, thread_id, assistant.assistant_id, assistant.graph_id
+        session, thread_id
     )
 
     # Persist run record via ORM model in core.orm (Run table)

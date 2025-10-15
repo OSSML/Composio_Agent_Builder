@@ -33,16 +33,13 @@ async def call_model(
     Returns:
         dict: A dictionary containing the model's response message.
     """
-    print(os.getenv("GOOGLE_API_KEY"))
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
 
     model = model.bind_tools(await fetch_tools())
 
     # Format the system prompt. Customize this to change the agent's behavior.
-    system_message = SYSTEM_PROMPT.format(
-        system_time=datetime.now(tz=UTC).isoformat()
-    )
+    system_message = SYSTEM_PROMPT
 
     # Get the model's response
     response = cast(

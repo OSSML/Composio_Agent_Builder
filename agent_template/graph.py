@@ -5,23 +5,21 @@ Works with a chat model with tool calling support.
 from asyncio import run
 import os
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.runtime import Runtime
 
-from template_agent.context import Context
-from template_agent.state import InputState, State
-from template_agent.tools import fetch_tools
+from agent_template.context import Context
+from agent_template.state import InputState, State
+from agent_template.tools import fetch_tools
 
 
 load_dotenv()
-
-TOOLS = run(fetch_tools())
 
 async def call_model(
     state: State, runtime: Runtime[Context]
@@ -41,7 +39,7 @@ async def call_model(
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
 
-    model = model.bind_tools(TOOLS)
+    model = model.bind_tools(await fetch_tools())
 
     # Format the system prompt. Customize this to change the agent's behavior.
     system_message = runtime.context.system_prompt
@@ -68,6 +66,36 @@ async def call_model(
     # Return the model's response as a list to be added to existing messages
     return {"messages": [response]}
 
+async def execute_tools(
+    state: State
+) -> Dict[str, List[BaseMessage]]:
+    """Execute tools dynamically based on the current context.
+
+    This node gets the tool calls from the last AI message and executes them
+    using a ToolExecutor initialized with tools from the runtime context.
+
+    Args:
+        state (State): The current state of the conversation.
+        runtime (Runtime[Context]): The graph runtime containing the current context.
+
+    Returns:
+        dict: A dictionary containing the tool execution results as ToolMessages.
+    """
+    last_message = state.messages[-1]
+    if not isinstance(last_message, AIMessage) or not last_message.tool_calls:
+        # This should not be called if there are no tool calls
+        return {}
+
+    # Get the actual tool functions from the map
+    selected_tools = await fetch_tools()
+
+    # Create a ToolExecutor with only the selected tools for this run
+    tool_executor = ToolNode(selected_tools)
+
+    # Execute the tool calls
+    response = await tool_executor.ainvoke(last_message.tool_calls)
+
+    return response
 
 # Define a new graph
 
@@ -75,7 +103,7 @@ builder = StateGraph(State, input_schema=InputState, context_schema=Context)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
-builder.add_node("tools", ToolNode(TOOLS))
+builder.add_node("tools", execute_tools)
 
 # Set the entrypoint as `call_model`
 # This means that this node is the first one called
@@ -118,7 +146,7 @@ builder.add_conditional_edges(
 builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph
-graph = builder.compile(name="ReAct Agent")
+graph = builder.compile(name="Template Agent")
 
 if __name__ == "__main__":
     import asyncio
