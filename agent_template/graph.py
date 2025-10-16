@@ -35,7 +35,6 @@ async def call_model(
     Returns:
         dict: A dictionary containing the model's response message.
     """
-    print(os.getenv("GOOGLE_API_KEY"))
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
 

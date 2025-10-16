@@ -1,3 +1,0 @@
-Cloud Storage CLI via ToolRouter – Manage S3/GCS/Azure Blob (list/sync/presign/version) entirely through a ToolRouter-backed CLI with audit logs
-
-Preferred Tools: S3, GCS, AzureBlob

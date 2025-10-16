@@ -10,6 +10,7 @@ tools = None
 async def fetch_tools():
     global tools
     if tools is None:
+        print("Fetching tools...")
         composio = Composio()
         userId = "hey@example.com"
         # Create a tool router session
