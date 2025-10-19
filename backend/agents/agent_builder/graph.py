@@ -2,18 +2,17 @@
 
 Works with a chat model with tool calling support.
 """
-import os
 from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 
 from agents.agent_builder.state import InputState, State
 from core.tool_router import fetch_tools
+from core.config import settings
+from agents.agent_builder.utils import load_chat_model
 from agents.agent_builder.prompts import SYSTEM_PROMPT
 from agents.agent_builder.models import BuilderResponse
 
@@ -35,9 +34,7 @@ async def call_model(
         dict: A dictionary containing the model's response message.
     """
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
-    # model = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
-
+    model = load_chat_model(settings.AGENT_BUILDER_MODEL)
     model = model.bind_tools(await fetch_tools())
 
     # Format the system prompt. Customize this to change the agent's behavior.
@@ -98,7 +95,7 @@ async def execute_tools(
 
 
 async def respond(state: State):
-    model_with_structured_output = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
+    model_with_structured_output = load_chat_model(settings.AGENT_BUILDER_MODEL)
     # model_with_structured_output = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
     model_with_structured_output = model_with_structured_output.with_structured_output(BuilderResponse)
     response = await model_with_structured_output.ainvoke(

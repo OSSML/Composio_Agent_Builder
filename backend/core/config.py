@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Database Settings
     DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parents[2].as_posix()}/composio.db"
     AGENT_BUILDER_MODEL: str = "google_genai/gemini-2.5-flash"
-    AGENT_TEMPLATE_MODEL: str = "openai/gpt-5-mini-2025-08-07"
+    AGENT_TEMPLATE_MODEL: str = "openai/gpt-4.1-mini-2025-04-14"
 
     # Temporary User Credentials
     USER_ID: str = "hey@example.com"

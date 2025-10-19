@@ -2,18 +2,17 @@
 
 Works with a chat model with tool calling support.
 """
-import os
 from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage
-from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.runtime import Runtime
 
 from agents.agent_template.context import Context
+from core.config import settings
+from agents.agent_template.utils import load_chat_model
 from agents.agent_template.state import InputState, State
 from core.tool_router import fetch_tools
 
@@ -35,8 +34,7 @@ async def call_model(
         dict: A dictionary containing the model's response message.
     """
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=os.getenv("GOOGLE_API_KEY"), thinking_budget=0)
-    # model = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
+    model = load_chat_model(settings.AGENT_TEMPLATE_MODEL)
 
     tools = await fetch_tools()
 
