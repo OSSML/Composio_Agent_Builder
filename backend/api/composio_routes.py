@@ -26,14 +26,20 @@ async def connect_tools(
                 continue
 
             auth_config_id = auth_configs.items[0].id
-            connected_accounts = composio.connected_accounts.list(auth_config_ids=[auth_config_id], statuses="ACTIVE")
+            connected_accounts = composio.connected_accounts.list(auth_config_ids=[auth_config_id])
 
-            if connected_accounts.total_items > 0:
+            active_account = False
+            for item in connected_accounts.items:
+                if item.data['status'] == "ACTIVE":
+                    active_account = True
+                    break
+
+            if active_account:
                 output.append("connected")
                 continue
 
             # Removed all the Connected accounts which are not in ACTIVE status
-            for item in composio.connected_accounts.list(auth_config_ids=[auth_config_id]).items:
+            for item in connected_accounts.items:
                 composio.connected_accounts.delete(item.id)
 
             output.append(composio.toolkits.authorize(user_id=settings.USER_ID, toolkit=tool).redirect_url)

@@ -88,7 +88,6 @@ export function AssistantDashboard({ assistant, onBack, onOpenChat }: AssistantD
   const [selectedCron, setSelectedCron] = useState<CronJob | null>(null);
   const [cronRuns, setCronRuns] = useState<CronRun[]>([]);
   const [selectedOutput, setSelectedOutput] = useState<string>('');
-  const [connectionsVerified, setConnectionsVerified] = useState(false);
   const [activeTab, setActiveTab] = useState<'connections' | 'cron' | 'chat'>('connections');
 
   // Form states
@@ -260,23 +259,23 @@ export function AssistantDashboard({ assistant, onBack, onOpenChat }: AssistantD
   const ensureConnectionsOrPrompt = async (): Promise<boolean> => {
     // If no toolkits are required, allow immediately
     if (!assistant.tool_kits || assistant.tool_kits.length === 0) {
-      setConnectionsVerified(true);
       return true;
     }
 
     // If we've already verified connections in this session, allow immediately
-    if (connectionsVerified) return true;
-
     try {
-      const missing = await checkToolkitConnections(assistant.tool_kits);
-      if (Array.isArray(missing) && missing.length > 0) {
-        // Switch to connections tab and prompt user to connect the missing toolkits
+      const connectionsStatus = await checkToolkitConnections(assistant.tool_kits);
+
+      // Check if all toolkits are connected
+      const missingConnections = connectionsStatus.filter(status => status !== "connected");
+
+      if (missingConnections.length > 0) {
+        // Some toolkits are not connected, so prompt the user to connect
         setActiveTab('connections');
         toast.error('Please connect all required toolkits before continuing');
         return false;
       }
 
-      setConnectionsVerified(true);
       return true;
     } catch (error) {
       console.error('Error checking toolkit connections:', error);
@@ -514,7 +513,6 @@ export function AssistantDashboard({ assistant, onBack, onOpenChat }: AssistantD
             ) : (
               <ToolkitConnectionManager
                 toolkits={assistant.tool_kits}
-                onConnectionsVerified={() => setConnectionsVerified(true)}
                 isEmbedded={true}
               />
             )}

@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 interface ToolkitConnectionManagerProps {
   toolkits: string[];
-  onConnectionsVerified: () => void;
   isEmbedded?: boolean;
 }
 
@@ -18,7 +17,7 @@ interface ToolkitStatus {
   connectionUrl?: string;
 }
 
-export function ToolkitConnectionManager({ toolkits, onConnectionsVerified, isEmbedded = false }: ToolkitConnectionManagerProps) {
+export function ToolkitConnectionManager({ toolkits, isEmbedded = false }: ToolkitConnectionManagerProps) {
   const [toolkitStatuses, setToolkitStatuses] = useState<ToolkitStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
@@ -48,7 +47,6 @@ export function ToolkitConnectionManager({ toolkits, onConnectionsVerified, isEm
       if (statuses.every(s => s.connected) && !isEmbedded) {
         setTimeout(() => {
           setShowDialog(false);
-          onConnectionsVerified();
         }, 1000);
       }
     } catch (error) {
@@ -151,7 +149,6 @@ export function ToolkitConnectionManager({ toolkits, onConnectionsVerified, isEm
               {allConnected && (
                 <Button onClick={() => {
                   setShowDialog(false);
-                  onConnectionsVerified();
                 }}>
                   Continue
                 </Button>

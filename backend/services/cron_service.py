@@ -123,5 +123,6 @@ scheduler = AsyncIOScheduler()
 
 # Job 1: Check every minute to see if a cron needs to be scheduled
 scheduler.add_job(check_and_schedule_cron_jobs, "interval", minutes=1)
+
 # Job 2: Check every 10 seconds to see if there are scheduled jobs to run
 scheduler.add_job(run_scheduled_jobs, "interval", seconds=10)
