@@ -1,7 +1,0 @@
-{
-  "dependencies": ["."],
-  "graphs": {
-    "agent_builder": "./agent_builder/graph.py:graph",
-    "agent_template": "./agent_template/graph.py:graph"
-  }
-}
