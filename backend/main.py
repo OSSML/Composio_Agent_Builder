@@ -10,6 +10,7 @@ import structlog
 
 from api import assistant_router, chat_router, composio_router, cron_router
 from core.database import db_manager
+from core.config import settings
 from core.orm import Base
 from core.tool_router import fetch_tools
 from misc.active_runs import active_runs
@@ -26,7 +27,7 @@ async def startup_event():
     # Startup: Initialize database and LangGraph components
     await db_manager.initialize()
 
-    URL = os.getenv("DATABASE_URL").replace("sqlite+aiosqlite", "sqlite")
+    URL = settings.DATABASE_URL.replace("sqlite+aiosqlite", "sqlite")
     engine = create_engine(URL)
 
     Base.metadata.create_all(engine)

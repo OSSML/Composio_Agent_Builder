@@ -2,12 +2,14 @@
 import asyncio
 from typing import Dict, List, Optional
 from datetime import datetime
+import logging
 
 from sqlalchemy import text
 import json
 from core.sse import SSEEvent, _serialize_message_object
 from core.database import db_manager
 
+logger = logging.getLogger(__name__)
 
 class EventStore:
     """SQLite-backed event store for SSE replay functionality"""
@@ -171,7 +173,7 @@ class EventStore:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                print(f"Error in event store cleanup: {e}")
+                logger.error(f"Error in event store cleanup: {e}")
 
     async def _cleanup_old_runs(self) -> None:
         """Delete events older than 1 hour."""

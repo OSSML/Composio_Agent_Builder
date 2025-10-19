@@ -7,6 +7,7 @@ import structlog
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.store.sqlite.aio import AsyncSqliteStore
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from core.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +21,7 @@ class DatabaseManager:
         self._checkpointer_cm: Any = None  # holds the contextmanager so we can close it
         self._store: AsyncSqliteStore | None = None
         self._store_cm: Any = None
-        self._database_url = os.getenv("DATABASE_URL")
+        self._database_url = settings.DATABASE_URL
 
     async def initialize(self) -> None:
         """Initialize database connections and LangGraph components"""
@@ -70,7 +71,6 @@ class DatabaseManager:
         """
         if not hasattr(self, "_langgraph_dsn"):
             raise RuntimeError("Database not initialized")
-        print(self._langgraph_dsn)
         if self._checkpointer is None:
             self._checkpointer_cm = AsyncSqliteSaver.from_conn_string(
                 self._langgraph_dsn

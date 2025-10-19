@@ -8,6 +8,7 @@ from typing import Literal, cast, Dict, List
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.runtime import Runtime
@@ -34,8 +35,8 @@ async def call_model(
         dict: A dictionary containing the model's response message.
     """
     # Initialize the model with tool binding. Change the model or add more tools here.
-    # model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=os.getenv("GOOGLE_API_KEY"), thinking_budget=0)
-    model = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
+    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=os.getenv("GOOGLE_API_KEY"), thinking_budget=0)
+    # model = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
 
     tools = await fetch_tools()
 
@@ -152,25 +153,3 @@ builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph
 graph = builder.compile(name="Template Agent")
-
-if __name__ == "__main__":
-    import asyncio
-    from langchain_core.messages import HumanMessage
-
-    async def main() -> None:
-        # async for raw_event in graph.astream(
-        #         InputState(
-        #             messages=[HumanMessage(content="Fetch my latest documents from google docs.")],
-        #         )
-        # ):
-        #     print(raw_event)
-        # # print(result)
-        input = {
-            "messages": [
-                HumanMessage(content="Who are you?"),
-            ]
-        }
-        output = await graph.ainvoke(input=input, context={"system_prompt": "You are a helpful assistant."})
-        print(output['messages'][-1].content)
-
-    asyncio.run(main())

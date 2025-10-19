@@ -1,4 +1,5 @@
 from datetime import datetime, UTC
+import logging
 
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -10,13 +11,15 @@ from core.orm import Assistant as AssistantORM, Cron as CronORM, CronRun as Cron
 from misc.models import Cron, CronRun
 from .langgraph_service import get_langgraph_service
 
+logger = logging.getLogger(__name__)
+
 async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
     """
     Run a cron job based on the provided CronRun and Cron definitions.
     """
-    print(f"[{datetime.now(UTC)}] Running job for CronRun ID: {cron_run.cron_run_id}")
-    print(f"  - Assistant ID: {cron_job.assistant_id}")
-    print(f"  - Required Fields: {cron_job.required_fields}")
+    logger.info(f"[{datetime.now(UTC)}] Running job for CronRun ID: {cron_run.cron_run_id}")
+    logger.info(f"  - Assistant ID: {cron_job.assistant_id}")
+    logger.info(f"  - Required Fields: {cron_job.required_fields}")
     try:
         maker = _get_session_maker()
         async with maker() as session:
@@ -42,15 +45,15 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
 
             response = await graph.ainvoke(input, {"recursion_limit": 30}, context=assistant.context)
             output = response["messages"][-1].content
-            print(response)
+            logger.info(response)
             for messages in response["messages"]:
-                print(f"  - Message: {messages.content}")
+                logger.info(f"  - Message: {messages.content}")
             output = {"status": "completed", "output": output}
-            print(f"[{datetime.now(UTC)}] Finished job for CronRun ID: {cron_run.cron_run_id}")
+            logger.info(f"[{datetime.now(UTC)}] Finished job for CronRun ID: {cron_run.cron_run_id}")
             return output
     except Exception as e:
         output = {"status": "error", "output": str(e)}
-        print(f"[{datetime.now(UTC)}] Job failed for CronRun ID: {cron_run.cron_run_id}. Error: {e}")
+        logger.error(f"[{datetime.now(UTC)}] Job failed for CronRun ID: {cron_run.cron_run_id}. Error: {e}")
         return output
 
 
@@ -76,7 +79,7 @@ async def check_and_schedule_cron_jobs():
             if cron_job.get_prev(datetime) == now:
                 new_cron_run = CronRunORM(cron_id=cron.cron_id, status="scheduled")
                 session.add(new_cron_run)
-                print(f"[{now}] SCHEDULING cron run for cron_id: {cron.cron_id}")
+                logger.info(f"[{now}] SCHEDULING cron run for cron_id: {cron.cron_id}")
         await session.commit()
 
 
@@ -95,7 +98,7 @@ async def run_scheduled_jobs():
         if not scheduled_runs:
             return
 
-        print(f"[{datetime.now(UTC)}] Found {len(scheduled_runs)} scheduled job(s) to run.")
+        logger.info(f"[{datetime.now(UTC)}] Found {len(scheduled_runs)} scheduled job(s) to run.")
 
         for run in scheduled_runs:
             # Mark the job as 'running' to prevent other workers from picking it up

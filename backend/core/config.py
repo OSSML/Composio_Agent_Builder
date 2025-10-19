@@ -22,8 +22,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-if __name__ == "__main__":
-    print("API Title:", settings.API_TITLE)
-    print("Database URL:", settings.DATABASE_URL)
-    print("User ID:", settings.USER_ID)
