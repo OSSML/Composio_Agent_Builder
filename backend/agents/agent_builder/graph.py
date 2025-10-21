@@ -2,6 +2,7 @@
 
 Works with a chat model with tool calling support.
 """
+
 from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
@@ -19,9 +20,7 @@ from agents.agent_builder.models import BuilderResponse
 load_dotenv()
 
 
-async def call_model(
-    state: State
-) -> dict[str, list[AIMessage]]:
+async def call_model(state: State) -> dict[str, list[AIMessage]]:
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
@@ -62,9 +61,8 @@ async def call_model(
     # Return the model's response as a list to be added to existing messages
     return {"messages": [response]}
 
-async def execute_tools(
-    state: State
-) -> Dict[str, List[BaseMessage]]:
+
+async def execute_tools(state: State) -> Dict[str, List[BaseMessage]]:
     """Execute tools dynamically based on the current context.
 
     This node gets the tool calls from the last AI message and executes them
@@ -97,7 +95,9 @@ async def execute_tools(
 async def respond(state: State):
     model_with_structured_output = load_chat_model(settings.AGENT_BUILDER_MODEL)
     # model_with_structured_output = ChatOpenAI(model="gpt-4.1-mini-2025-04-14")
-    model_with_structured_output = model_with_structured_output.with_structured_output(BuilderResponse)
+    model_with_structured_output = model_with_structured_output.with_structured_output(
+        BuilderResponse
+    )
     response = await model_with_structured_output.ainvoke(
         [HumanMessage(content=state.messages[-1].content)]
     )
@@ -159,4 +159,3 @@ builder.add_edge("respond", "__end__")
 
 # Compile the builder into an executable graph
 graph = builder.compile(name="Agent Builder")
-

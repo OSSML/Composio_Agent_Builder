@@ -2,6 +2,7 @@
 
 Works with a chat model with tool calling support.
 """
+
 from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ from core.tool_router import fetch_tools
 
 
 load_dotenv()
+
 
 async def call_model(
     state: State, runtime: Runtime[Context]
@@ -67,9 +69,8 @@ async def call_model(
     # Return the model's response as a list to be added to existing messages
     return {"messages": [response]}
 
-async def execute_tools(
-    state: State
-) -> Dict[str, List[BaseMessage]]:
+
+async def execute_tools(state: State) -> Dict[str, List[BaseMessage]]:
     """Execute tools dynamically based on the current context.
 
     This node gets the tool calls from the last AI message and executes them
@@ -100,6 +101,7 @@ async def execute_tools(
     response = await tool_executor.ainvoke(last_message.tool_calls)
 
     return response
+
 
 # Define a new graph
 

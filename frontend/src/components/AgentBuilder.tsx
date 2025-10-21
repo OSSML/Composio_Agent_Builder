@@ -37,11 +37,11 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
     try {
       // Step 1: Get agent_builder assistant (hardcoded for now, or fetch from API)
       const agentBuilderId = 'a38fd80f-fc84-5947-b925-bb8cbac617da'; // You might want to fetch this
-      
+
       // Step 2: Create thread for agent_builder
       setStatus('Creating planning session...');
       const thread = await createThread('agent_builder', agentBuilderId);
-      
+
       // Step 3: Create run with task name and description
       setStatus('Generating system prompt...');
       const input = {
@@ -57,28 +57,28 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
           }
         ]
       };
-      
+
       const run = await createRun(thread.thread_id, agentBuilderId, input);
-      
+
       // Step 4: Poll until completion
       await pollRun(thread.thread_id, run.run_id, (currentRun) => {
         setStatus(`Status: ${currentRun.status}...`);
       });
-      
+
       // Step 5: Get thread history
       setStatus('Retrieving generated prompt...');
       const history = await getThreadHistory(thread.thread_id, 1);
-      
+
       // Extract the last AI message
       if (history.length > 0 && history[0].values.messages) {
         const messages = history[0].values.messages;
         const lastAiMessage = messages.reverse().find(m => m.type === 'ai');
-        
+
         if (lastAiMessage) {
-          const content = typeof lastAiMessage.content === 'string' 
-            ? lastAiMessage.content 
+          const content = typeof lastAiMessage.content === 'string'
+            ? lastAiMessage.content
             : lastAiMessage.content.map(c => c.text || '').join('');
-          
+
           // Parse JSON from the content
           try {
             const parsed = JSON.parse(content);
@@ -95,7 +95,7 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
           }
         }
       }
-      
+
     } catch (error) {
       console.error('Error generating agent:', error);
       setStatus('Error: ' + (error as Error).message);
@@ -130,7 +130,7 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
       setTimeout(() => {
         onAgentCreated(assistant.assistant_id);
       }, 500);
-      
+
     } catch (error) {
       console.error('Error creating agent:', error);
       setStatus('Error: ' + (error as Error).message);

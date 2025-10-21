@@ -1,21 +1,34 @@
 import asyncio
 from datetime import datetime, timezone, UTC
 from uuid import uuid4
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import logging
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Header
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from misc.active_runs import active_runs
 from misc.models import (
-    Thread, ThreadCreate, ThreadHistoryRequest, ThreadState, ThreadSearchRequest, ThreadSearchResponse,
-    Run, RunStatus, RunCreate, RunList
+    Thread,
+    ThreadCreate,
+    ThreadHistoryRequest,
+    ThreadState,
+    ThreadSearchRequest,
+    ThreadSearchResponse,
+    Run,
+    RunStatus,
+    RunCreate,
+    RunList,
 )
-from core.orm import Assistant as AssistantORM, Thread as ThreadORM, get_session, Run as RunORM
-from core.sse import create_end_event, get_sse_headers
+from core.orm import (
+    Assistant as AssistantORM,
+    Thread as ThreadORM,
+    get_session,
+    Run as RunORM,
+)
+from core.sse import get_sse_headers
 from misc.utils import set_thread_status, update_thread_metadata, execute_run_async
 from services.langgraph_service import get_langgraph_service, create_thread_config
 from services.streaming_service import streaming_service
@@ -28,16 +41,13 @@ logger = logging.getLogger(__name__)
 
 @router.post("/chat/new", response_model=Thread)
 async def create_chat(
-    request: ThreadCreate,
-    session: AsyncSession = Depends(get_session)
+    request: ThreadCreate, session: AsyncSession = Depends(get_session)
 ):
     """Create a new chat thread."""
     thread_id = str(uuid4())
 
     metadata = request.metadata or {}
-    metadata.update({
-        "graph_id": request.graph_id
-    })
+    metadata.update({"graph_id": request.graph_id})
 
     thread_orm = ThreadORM(
         assistant_id=request.assistant_id,
@@ -70,17 +80,22 @@ async def create_chat(
 async def get_chat_history(
     thread_id: str,
     request: ThreadHistoryRequest,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """Get the chat history for a specific thread."""
     try:
         limit = request.limit or 10
         if not isinstance(limit, int) or limit < 1 or limit > 1000:
-            raise HTTPException(422, "Invalid limit; must be an integer between 1 and 1000")
+            raise HTTPException(
+                422, "Invalid limit; must be an integer between 1 and 1000"
+            )
 
         before = request.before
         if before is not None and not isinstance(before, str):
-            raise HTTPException(422, "Invalid 'before' parameter; must be a string checkpoint identifier")
+            raise HTTPException(
+                422,
+                "Invalid 'before' parameter; must be a string checkpoint identifier",
+            )
 
         metadata = request.metadata
         if metadata is not None and not isinstance(metadata, dict):
@@ -88,19 +103,20 @@ async def get_chat_history(
 
         checkpoint = request.checkpoint or {}
         if not isinstance(checkpoint, dict):
-            raise HTTPException(422, "Invalid 'checkpoint' parameter; must be an object")
+            raise HTTPException(
+                422, "Invalid 'checkpoint' parameter; must be an object"
+            )
 
         checkpoint_ns = request.checkpoint_ns
         if checkpoint_ns is not None and not isinstance(checkpoint_ns, str):
             raise HTTPException(422, "Invalid 'checkpoint_ns'; must be a string")
 
         logger.debug(
-            f"history POST: thread_id={thread_id} limit={limit} before={before} checkpoint_ns={checkpoint_ns}")
+            f"history POST: thread_id={thread_id} limit={limit} before={before} checkpoint_ns={checkpoint_ns}"
+        )
 
         # Verify the thread exists and belongs to the user
-        stmt = select(ThreadORM).where(
-            ThreadORM.thread_id == thread_id
-        )
+        stmt = select(ThreadORM).where(ThreadORM.thread_id == thread_id)
         thread = await session.scalar(stmt)
         if not thread:
             raise HTTPException(404, f"Thread '{thread_id}' not found")
@@ -153,9 +169,13 @@ async def get_chat_history(
             checkpoint_id = None
             parent_checkpoint_id = None
             if isinstance(snap_config, dict):
-                checkpoint_id = (snap_config.get("configurable") or {}).get("checkpoint_id")
+                checkpoint_id = (snap_config.get("configurable") or {}).get(
+                    "checkpoint_id"
+                )
             if isinstance(parent_config, dict):
-                parent_checkpoint_id = (parent_config.get("configurable") or {}).get("checkpoint_id")
+                parent_checkpoint_id = (parent_config.get("configurable") or {}).get(
+                    "checkpoint_id"
+                )
 
             created_at = getattr(snapshot, "created_at", None)
 
@@ -181,10 +201,10 @@ async def get_chat_history(
             return []
         raise HTTPException(500, f"Error retrieving thread history: {str(e)}")
 
+
 @router.post("/chat/search", response_model=ThreadSearchResponse)
 async def chat_search(
-    request: ThreadSearchRequest,
-    session: AsyncSession = Depends(get_session)
+    request: ThreadSearchRequest, session: AsyncSession = Depends(get_session)
 ):
     """Search chats with filters"""
 
@@ -210,10 +230,12 @@ async def chat_search(
     result = await session.scalars(stmt)
     rows = result.all()
     threads_models = [
-        Thread.model_validate({
-            **{c.name: getattr(t, c.name) for c in t.__table__.columns},
-            "metadata": t.metadata_json,
-        })
+        Thread.model_validate(
+            {
+                **{c.name: getattr(t, c.name) for c in t.__table__.columns},
+                "metadata": t.metadata_json,
+            }
+        )
         for t in rows
     ]
 
@@ -225,11 +247,10 @@ async def chat_search(
         offset=offset,
     )
 
+
 @router.post("/chat/{thread_id}/runs", response_model=Run)
 async def create_run(
-    thread_id: str,
-    request: RunCreate,
-    session: AsyncSession = Depends(get_session)
+    thread_id: str, request: RunCreate, session: AsyncSession = Depends(get_session)
 ):
     """Create and execute a new run (persisted)."""
 
@@ -286,9 +307,7 @@ async def create_run(
 
     # Mark thread as busy and update metadata with assistant/graph info
     await set_thread_status(session, thread_id, "busy")
-    await update_thread_metadata(
-        session, thread_id
-    )
+    await update_thread_metadata(session, thread_id)
 
     # Persist run record via ORM model in core.orm (Run table)
     now = datetime.now(UTC)
@@ -334,8 +353,8 @@ async def create_run(
             config,
             context,
             request.stream_mode,
-            request.checkpoint
-            )
+            request.checkpoint,
+        )
     )
     logger.info(
         f"[create_run] background task created task_id={id(task)} for run_id={run_id}"
@@ -347,9 +366,9 @@ async def create_run(
 
 @router.post("/threads/{thread_id}/runs/stream")
 async def create_and_stream_run(
-        thread_id: str,
-        request: RunCreate,
-        session: AsyncSession = Depends(get_session),
+    thread_id: str,
+    request: RunCreate,
+    session: AsyncSession = Depends(get_session),
 ) -> StreamingResponse:
     """Create a new run and stream its execution - persisted + SSE."""
 
@@ -386,7 +405,7 @@ async def create_and_stream_run(
 
     assistant_stmt = select(AssistantORM).where(
         AssistantORM.assistant_id == resolved_assistant_id,
-        )
+    )
     assistant = await session.scalar(assistant_stmt)
     if not assistant:
         raise HTTPException(404, f"Assistant '{request.assistant_id}' not found")
@@ -403,9 +422,7 @@ async def create_and_stream_run(
 
     # Mark thread as busy and update metadata with assistant/graph info
     await set_thread_status(session, thread_id, "busy")
-    await update_thread_metadata(
-        session, thread_id
-    )
+    await update_thread_metadata(session, thread_id)
 
     # Persist run record
     now = datetime.now(UTC)
@@ -451,8 +468,8 @@ async def create_and_stream_run(
             config,
             context,
             request.stream_mode,
-            request.checkpoint
-            )
+            request.checkpoint,
+        )
     )
     logger.info(
         f"[create_and_stream_run] background task created task_id={id(task)} for run_id={run_id}"
@@ -498,9 +515,13 @@ async def get_run(
     if not run_orm:
         raise HTTPException(404, f"Run '{run_id}' not found")
 
-    logger.info(f"[get_run] found run status={run_orm.status} thread_id={thread_id} run_id={run_id}")
+    logger.info(
+        f"[get_run] found run status={run_orm.status} thread_id={thread_id} run_id={run_id}"
+    )
     # Convert to Pydantic
-    return Run.model_validate({c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns})
+    return Run.model_validate(
+        {c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns}
+    )
 
 
 @router.get("/chat/{thread_id}/runs", response_model=RunList)
@@ -509,13 +530,20 @@ async def list_runs(
     session: AsyncSession = Depends(get_session),
 ):
     """List runs for a specific thread (persisted)."""
-    stmt = select(RunORM).where(
-        RunORM.thread_id == thread_id,
-    ).order_by(RunORM.created_at.desc())
+    stmt = (
+        select(RunORM)
+        .where(
+            RunORM.thread_id == thread_id,
+        )
+        .order_by(RunORM.created_at.desc())
+    )
     logger.info(f"[list_runs] querying DB thread_id={thread_id}")
     result = await session.scalars(stmt)
     rows = result.all()
-    runs = [Run.model_validate({c.name: getattr(r, c.name) for c in r.__table__.columns}) for r in rows]
+    runs = [
+        Run.model_validate({c.name: getattr(r, c.name) for c in r.__table__.columns})
+        for r in rows
+    ]
     logger.info(f"[list_runs] total={len(runs)} thread_id={thread_id}")
     return RunList(runs=runs, total=len(runs))
 
@@ -544,7 +572,9 @@ async def update_run(
         await streaming_service.cancel_run(run_id)
         logger.info(f"[update_run] set DB status=cancelled run_id={run_id}")
         await session.execute(
-            update(RunORM).where(RunORM.run_id == str(run_id)).values(status="cancelled", updated_at=datetime.now(timezone.utc))
+            update(RunORM)
+            .where(RunORM.run_id == str(run_id))
+            .values(status="cancelled", updated_at=datetime.now(timezone.utc))
         )
         await session.commit()
         logger.info(f"[update_run] commit done (cancelled) run_id={run_id}")
@@ -553,22 +583,30 @@ async def update_run(
         await streaming_service.interrupt_run(run_id)
         logger.info(f"[update_run] set DB status=interrupted run_id={run_id}")
         await session.execute(
-            update(RunORM).where(RunORM.run_id == str(run_id)).values(status="interrupted", updated_at=datetime.now(timezone.utc))
+            update(RunORM)
+            .where(RunORM.run_id == str(run_id))
+            .values(status="interrupted", updated_at=datetime.now(timezone.utc))
         )
         await session.commit()
         logger.info(f"[update_run] commit done (interrupted) run_id={run_id}")
 
     # Return final run state
     run_orm = await session.scalar(select(RunORM).where(RunORM.run_id == run_id))
-    return Run.model_validate({c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns})
+    return Run.model_validate(
+        {c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns}
+    )
 
 
 @router.post("/chat/{thread_id}/runs/{run_id}/cancel")
 async def cancel_run_endpoint(
     thread_id: str,
     run_id: str,
-    wait: int = Query(0, ge=0, le=1, description="Whether to wait for the run task to settle"),
-    action: str = Query("cancel", pattern="^(cancel|interrupt)$", description="Cancellation action"),
+    wait: int = Query(
+        0, ge=0, le=1, description="Whether to wait for the run task to settle"
+    ),
+    action: str = Query(
+        "cancel", pattern="^(cancel|interrupt)$", description="Cancellation action"
+    ),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -596,7 +634,9 @@ async def cancel_run_endpoint(
         await streaming_service.interrupt_run(run_id)
         # Persist status as interrupted
         await session.execute(
-            update(RunORM).where(RunORM.run_id == str(run_id)).values(status="interrupted", updated_at=datetime.now(timezone.utc))
+            update(RunORM)
+            .where(RunORM.run_id == str(run_id))
+            .values(status="interrupted", updated_at=datetime.now(timezone.utc))
         )
         await session.commit()
     else:
@@ -604,7 +644,9 @@ async def cancel_run_endpoint(
         await streaming_service.cancel_run(run_id)
         # Persist status as cancelled
         await session.execute(
-            update(RunORM).where(RunORM.run_id == str(run_id)).values(status="cancelled", updated_at=datetime.now(timezone.utc))
+            update(RunORM)
+            .where(RunORM.run_id == str(run_id))
+            .values(status="cancelled", updated_at=datetime.now(timezone.utc))
         )
         await session.commit()
 
@@ -628,4 +670,6 @@ async def cancel_run_endpoint(
     )
     if not run_orm:
         raise HTTPException(404, f"Run '{run_id}' not found after cancellation")
-    return Run.model_validate({c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns})
+    return Run.model_validate(
+        {c.name: getattr(run_orm, c.name) for c in run_orm.__table__.columns}
+    )

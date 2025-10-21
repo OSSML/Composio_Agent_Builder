@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
+
 class Settings(BaseSettings):
     # API Settings
     API_TITLE: str = "Composio Agent Builder"
@@ -18,7 +19,9 @@ class Settings(BaseSettings):
     # Temporary User Credentials
     USER_ID: str = "hey@example.com"
 
-    model_config = SettingsConfigDict(env_file = ".env", env_file_encoding = "utf-8", extra = "allow")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="allow"
+    )
 
 
 settings = Settings()

@@ -7,17 +7,25 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from croniter import croniter
 from langchain_core.messages import HumanMessage
 
-from core.orm import Assistant as AssistantORM, Cron as CronORM, CronRun as CronRunORM, _get_session_maker
+from core.orm import (
+    Assistant as AssistantORM,
+    Cron as CronORM,
+    CronRun as CronRunORM,
+    _get_session_maker,
+)
 from misc.models import Cron, CronRun
 from .langgraph_service import get_langgraph_service
 
 logger = logging.getLogger(__name__)
 
+
 async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
     """
     Run a cron job based on the provided CronRun and Cron definitions.
     """
-    logger.info(f"[{datetime.now(UTC)}] Running job for CronRun ID: {cron_run.cron_run_id}")
+    logger.info(
+        f"[{datetime.now(UTC)}] Running job for CronRun ID: {cron_run.cron_run_id}"
+    )
     logger.info(f"  - Assistant ID: {cron_job.assistant_id}")
     logger.info(f"  - Required Fields: {cron_job.required_fields}")
     try:
@@ -34,26 +42,34 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
             langgraph_service = get_langgraph_service()
             graph = await langgraph_service.get_graph_raw(assistant.graph_id)
 
-            user_prompt = (f"required_fields: {cron_job.required_fields}, \nspecial_instructions: {cron_job.special_instructions}"
-                           f"You don't need to create the plan for the task, since the plan is already present in the prompt. You can create plan only if you find it necessary to complete the task."
-                           f"\nPlease complete the task as per the required fields and special instructions. And output if the task was completed successfully or not."
-                           f"Do not quit until the task is completed, there will be no human assistance for this run. This is a cron job, so you must complete the task on your own. "
-                           f"Output must contain final status of the task and any relevant details. Do not ask for any clarifications.")
+            user_prompt = (
+                f"required_fields: {cron_job.required_fields}, \nspecial_instructions: {cron_job.special_instructions}"
+                f"You don't need to create the plan for the task, since the plan is already present in the prompt. You can create plan only if you find it necessary to complete the task."
+                f"\nPlease complete the task as per the required fields and special instructions. And output if the task was completed successfully or not."
+                f"Do not quit until the task is completed, there will be no human assistance for this run. This is a cron job, so you must complete the task on your own. "
+                f"Output must contain final status of the task and any relevant details. Do not ask for any clarifications."
+            )
             input = {
                 "messages": [HumanMessage(content=user_prompt)],
             }
 
-            response = await graph.ainvoke(input, {"recursion_limit": 30}, context=assistant.context)
+            response = await graph.ainvoke(
+                input, {"recursion_limit": 30}, context=assistant.context
+            )
             output = response["messages"][-1].content
             logger.info(response)
             for messages in response["messages"]:
                 logger.info(f"  - Message: {messages.content}")
             output = {"status": "completed", "output": output}
-            logger.info(f"[{datetime.now(UTC)}] Finished job for CronRun ID: {cron_run.cron_run_id}")
+            logger.info(
+                f"[{datetime.now(UTC)}] Finished job for CronRun ID: {cron_run.cron_run_id}"
+            )
             return output
     except Exception as e:
         output = {"status": "error", "output": str(e)}
-        logger.error(f"[{datetime.now(UTC)}] Job failed for CronRun ID: {cron_run.cron_run_id}. Error: {e}")
+        logger.error(
+            f"[{datetime.now(UTC)}] Job failed for CronRun ID: {cron_run.cron_run_id}. Error: {e}"
+        )
         return output
 
 
@@ -67,7 +83,7 @@ async def check_and_schedule_cron_jobs():
     async with maker() as session:
         # Round current time to the beginning of the minute for accurate comparison
         now = datetime.now(UTC).replace(second=0, microsecond=0)
-        result = await session.execute(select(CronORM).where(CronORM.enabled == True))
+        result = await session.execute(select(CronORM).where(CronORM.enabled))
         crons = result.scalars().all()
         for cron in crons:
             if not croniter.is_valid(cron.schedule):
@@ -91,14 +107,21 @@ async def run_scheduled_jobs():
 
     async with maker() as session:
         # Fetch scheduled jobs and their parent cron info
-        stmt = select(CronRunORM).where(CronRunORM.status == "scheduled").join(CronORM, CronRunORM.cron_id == CronORM.cron_id).options(joinedload(CronRunORM.cron))
+        stmt = (
+            select(CronRunORM)
+            .where(CronRunORM.status == "scheduled")
+            .join(CronORM, CronRunORM.cron_id == CronORM.cron_id)
+            .options(joinedload(CronRunORM.cron))
+        )
         result = await session.execute(stmt)
         scheduled_runs = result.scalars().all()
 
         if not scheduled_runs:
             return
 
-        logger.info(f"[{datetime.now(UTC)}] Found {len(scheduled_runs)} scheduled job(s) to run.")
+        logger.info(
+            f"[{datetime.now(UTC)}] Found {len(scheduled_runs)} scheduled job(s) to run."
+        )
 
         for run in scheduled_runs:
             # Mark the job as 'running' to prevent other workers from picking it up
@@ -113,8 +136,8 @@ async def run_scheduled_jobs():
             output = await run_cron_job(cron_run, cron)
 
             # Update the record with the final status and output
-            run.status = output['status']
-            run.output = output['output']
+            run.status = output["status"]
+            run.output = output["output"]
             run.completed_at = datetime.now(UTC)
             await session.commit()
 

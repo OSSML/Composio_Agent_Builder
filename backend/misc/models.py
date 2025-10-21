@@ -17,8 +17,12 @@ class AssistantCreate(BaseModel):
     config: dict[str, Any] | None = Field({}, description="Assistant configuration")
     context: dict[str, Any] | None = Field({}, description="Assistant context")
     graph_id: str = Field(..., description="LangGraph graph ID from aegra.json")
-    tool_kits: list[str] | None = Field([], description="List of tool kit names to enable")
-    required_fields: list[dict[str, Any]] | None = Field([], description="List of required fields for the assistant")
+    tool_kits: list[str] | None = Field(
+        [], description="List of tool kit names to enable"
+    )
+    required_fields: list[dict[str, Any]] | None = Field(
+        [], description="List of required fields for the assistant"
+    )
     metadata: dict[str, Any] | None = Field(
         {}, description="Metadata to use for searching and filtering assistants."
     )
@@ -73,14 +77,18 @@ class AssistantSearchRequest(BaseModel):
 
 class ThreadCreate(BaseModel):
     """Request model for creating threads"""
+
     graph_id: str = Field(..., description="Graph to execute")
     assistant_id: str = Field(..., description="Assistant thread belongs to")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Thread metadata")
-    initial_state: Optional[Dict[str, Any]] = Field(None, description="LangGraph initial state")
+    initial_state: Optional[Dict[str, Any]] = Field(
+        None, description="LangGraph initial state"
+    )
 
 
 class Thread(BaseModel):
     """Thread entity model"""
+
     assistant_id: str
     thread_id: str
     status: str = "idle"
@@ -124,6 +132,7 @@ class ThreadState(BaseModel):
 
 class ThreadSearchRequest(BaseModel):
     """Request model for thread search"""
+
     metadata: Optional[Dict[str, Any]] = Field(None, description="Metadata filters")
     status: Optional[str] = Field(None, description="Thread status filter")
     limit: Optional[int] = Field(20, le=100, ge=1, description="Maximum results")
@@ -133,6 +142,7 @@ class ThreadSearchRequest(BaseModel):
 
 class ThreadSearchResponse(BaseModel):
     """Response model for thread search"""
+
     threads: List[Thread]
     total: int
     limit: int
@@ -141,35 +151,52 @@ class ThreadSearchResponse(BaseModel):
 
 class ThreadList(BaseModel):
     """Response model for listing threads"""
+
     threads: List[Thread]
     total: int
 
 
 class ThreadHistoryRequest(BaseModel):
     """Request model for thread history endpoint"""
-    limit: Optional[int] = Field(10, ge=1, le=1000, description="Number of states to return")
-    before: Optional[str] = Field(None, description="Return states before this checkpoint ID")
+
+    limit: Optional[int] = Field(
+        10, ge=1, le=1000, description="Number of states to return"
+    )
+    before: Optional[str] = Field(
+        None, description="Return states before this checkpoint ID"
+    )
     metadata: Optional[Dict[str, Any]] = Field(None, description="Filter by metadata")
-    checkpoint: Optional[Dict[str, Any]] = Field(None, description="Checkpoint for subgraph filtering")
-    subgraphs: Optional[bool] = Field(False, description="Include states from subgraphs")
+    checkpoint: Optional[Dict[str, Any]] = Field(
+        None, description="Checkpoint for subgraph filtering"
+    )
+    subgraphs: Optional[bool] = Field(
+        False, description="Include states from subgraphs"
+    )
     checkpoint_ns: Optional[str] = Field(None, description="Checkpoint namespace")
 
 
 class RunCreate(BaseModel):
     """Request model for creating runs"""
+
     assistant_id: str = Field(None, description="Graph to execute")
     input: Optional[Dict[str, Any]] = Field(
         None,
         description="Input data for the run. Optional when resuming from a checkpoint.",
     )
-    config: Optional[Dict[str, Any]] = Field({}, description="LangGraph execution config")
-    context: Optional[Dict[str, Any]] = Field({}, description="Context data for the run")
+    config: Optional[Dict[str, Any]] = Field(
+        {}, description="LangGraph execution config"
+    )
+    context: Optional[Dict[str, Any]] = Field(
+        {}, description="Context data for the run"
+    )
     checkpoint: Optional[Dict[str, Any]] = Field(
         None,
         description="Checkpoint configuration (e.g., {'checkpoint_id': '...', 'checkpoint_ns': ''})",
     )
     stream: bool = Field(False, description="Enable streaming response")
-    stream_mode: Optional[str | list[str]] = Field(None, description="Requested stream mode(s) as per LangGraph")
+    stream_mode: Optional[str | list[str]] = Field(
+        None, description="Requested stream mode(s) as per LangGraph"
+    )
     on_disconnect: Optional[str] = Field(
         None,
         description="Behavior on client disconnect: 'cancel' or 'continue' (default).",
@@ -178,6 +205,7 @@ class RunCreate(BaseModel):
 
 class Run(BaseModel):
     """Run entity model"""
+
     run_id: str
     thread_id: str
     assistant_id: str
@@ -196,12 +224,14 @@ class Run(BaseModel):
 
 class RunList(BaseModel):
     """Response model for listing runs"""
+
     runs: List[Run]
     total: int
 
 
 class RunStatus(BaseModel):
     """Simple run status response"""
+
     run_id: str
     status: str
     message: Optional[str] = None
@@ -209,14 +239,22 @@ class RunStatus(BaseModel):
 
 class CronCreate(BaseModel):
     """Request model for creating cron jobs"""
+
     assistant_id: str = Field(..., description="Assistant to run on schedule")
-    schedule: str = Field(..., description="Cron schedule expression (e.g., '0 * * * *')")
-    required_fields: Optional[Dict[str, Any]] = Field({}, description="Required fields for the assistant")
-    special_instructions: Optional[str] = Field("", description="Special instructions for the run")
+    schedule: str = Field(
+        ..., description="Cron schedule expression (e.g., '0 * * * *')"
+    )
+    required_fields: Optional[Dict[str, Any]] = Field(
+        {}, description="Required fields for the assistant"
+    )
+    special_instructions: Optional[str] = Field(
+        "", description="Special instructions for the run"
+    )
 
 
 class Cron(BaseModel):
     """Cron entity model"""
+
     cron_id: str
     assistant_id: str
     schedule: str
@@ -232,14 +270,22 @@ class Cron(BaseModel):
 
 class CronUpdate(BaseModel):
     """Request model for updating cron jobs"""
-    schedule: Optional[str] = Field(None, description="Cron schedule expression (e.g., '0 * * * *')")
-    required_fields: Optional[Dict[str, Any]] = Field(None, description="Required fields for the assistant")
-    special_instructions: Optional[str] = Field(None, description="Special instructions for the run")
+
+    schedule: Optional[str] = Field(
+        None, description="Cron schedule expression (e.g., '0 * * * *')"
+    )
+    required_fields: Optional[Dict[str, Any]] = Field(
+        None, description="Required fields for the assistant"
+    )
+    special_instructions: Optional[str] = Field(
+        None, description="Special instructions for the run"
+    )
     enabled: Optional[bool] = Field(None, description="Whether the cron job is enabled")
 
 
 class CronRun(BaseModel):
     """CronRun entity model"""
+
     cron_run_id: str
     cron_id: str
     status: str  # scheduled, running, completed, failed

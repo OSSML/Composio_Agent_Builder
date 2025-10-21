@@ -6,9 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from misc.models import (
-    AssistantCreate, Assistant
-)
+from misc.models import AssistantCreate, Assistant
 from core.orm import Assistant as AssistantORM, get_session
 from services.langgraph_service import get_langgraph_service
 
@@ -28,8 +26,7 @@ def to_pydantic(row: AssistantORM) -> Assistant:
 
 @router.post("/assistants", response_model=Assistant)
 async def create_assistant(
-    request: AssistantCreate,
-    session: AsyncSession = Depends(get_session)
+    request: AssistantCreate, session: AsyncSession = Depends(get_session)
 ):
     """Create a new assistant"""
     # Get LangGraph service to validate graph
@@ -77,8 +74,8 @@ async def create_assistant(
         or_(
             (AssistantORM.graph_id == graph_id) & (AssistantORM.config == config),
             AssistantORM.assistant_id == assistant_id,
-            ),
-        )
+        ),
+    )
     existing = await session.scalar(existing_stmt)
 
     if existing:
@@ -107,9 +104,7 @@ async def create_assistant(
 
 
 @router.get("/assistants", response_model=List[Assistant])
-async def list_assistants(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_assistants(session: AsyncSession = Depends(get_session)):
     """List user's assistants"""
     stmt = select(AssistantORM)
     result = await session.scalars(stmt)

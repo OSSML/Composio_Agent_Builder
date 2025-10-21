@@ -12,6 +12,7 @@ router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
+
 @router.post("/tools/connect", response_model=List[str])
 async def connect_tools(
     tools: List[str] = Body(..., embed=True),
@@ -20,17 +21,23 @@ async def connect_tools(
     try:
         output = []
         for tool in tools:
-            auth_configs = composio.auth_configs.list(toolkit_slug = tool)
+            auth_configs = composio.auth_configs.list(toolkit_slug=tool)
             if auth_configs.total_items == 0:
-                output.append(composio.toolkits.authorize(user_id=settings.USER_ID, toolkit=tool).redirect_url)
+                output.append(
+                    composio.toolkits.authorize(
+                        user_id=settings.USER_ID, toolkit=tool
+                    ).redirect_url
+                )
                 continue
 
             auth_config_id = auth_configs.items[0].id
-            connected_accounts = composio.connected_accounts.list(auth_config_ids=[auth_config_id])
+            connected_accounts = composio.connected_accounts.list(
+                auth_config_ids=[auth_config_id]
+            )
 
             active_account = False
             for item in connected_accounts.items:
-                if item.data['status'] == "ACTIVE":
+                if item.data["status"] == "ACTIVE":
                     active_account = True
                     break
 
@@ -42,7 +49,11 @@ async def connect_tools(
             for item in connected_accounts.items:
                 composio.connected_accounts.delete(item.id)
 
-            output.append(composio.toolkits.authorize(user_id=settings.USER_ID, toolkit=tool).redirect_url)
+            output.append(
+                composio.toolkits.authorize(
+                    user_id=settings.USER_ID, toolkit=tool
+                ).redirect_url
+            )
 
         return output
 
@@ -56,12 +67,16 @@ async def disconnect_tool(
 ):
     """Disconnect a tool from the tool repository."""
     try:
-        auth_configs = composio.auth_configs.list(toolkit_slug = tool)
+        auth_configs = composio.auth_configs.list(toolkit_slug=tool)
         auth_config_id = auth_configs.items[0].id
-        for item in composio.connected_accounts.list(auth_config_ids=[auth_config_id]).items:
+        for item in composio.connected_accounts.list(
+            auth_config_ids=[auth_config_id]
+        ).items:
             composio.connected_accounts.delete(item.id)
 
-        return composio.toolkits.authorize(user_id=settings.USER_ID, toolkit=tool).redirect_url
+        return composio.toolkits.authorize(
+            user_id=settings.USER_ID, toolkit=tool
+        ).redirect_url
 
     except Exception as e:
         raise HTTPException(500, f"Failed to disconnect tool: {str(e)}") from e

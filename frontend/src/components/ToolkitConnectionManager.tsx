@@ -31,7 +31,7 @@ export function ToolkitConnectionManager({ toolkits, isEmbedded = false }: Toolk
     setLoading(true);
     try {
       const results = await checkToolkitConnections(toolkits);
-      
+
       const statuses: ToolkitStatus[] = toolkits.map((toolkit, index) => {
         const result = results[index];
         return {
@@ -40,9 +40,9 @@ export function ToolkitConnectionManager({ toolkits, isEmbedded = false }: Toolk
           connectionUrl: result !== 'connected' ? result : undefined
         };
       });
-      
+
       setToolkitStatuses(statuses);
-      
+
       // If all are connected, auto-proceed (only for non-embedded mode)
       if (statuses.every(s => s.connected) && !isEmbedded) {
         setTimeout(() => {
@@ -60,7 +60,7 @@ export function ToolkitConnectionManager({ toolkits, isEmbedded = false }: Toolk
     setDisconnecting(toolkit);
     try {
       const reconnectUrl = await disconnectToolkit(toolkit);
-      
+
       // Update the status to show disconnected with new connection URL
       setToolkitStatuses(prev =>
         prev.map(status =>

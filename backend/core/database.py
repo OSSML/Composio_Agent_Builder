@@ -1,6 +1,5 @@
 """Database manager with LangGraph integration"""
 
-import os
 from typing import Any
 
 import structlog

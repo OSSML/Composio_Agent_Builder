@@ -6,9 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from misc.models import (
-    Cron, CronCreate, CronUpdate, CronRun
-)
+from misc.models import Cron, CronCreate, CronUpdate, CronRun
 from core.orm import Cron as CronORM, CronRun as CronRunORM, get_session
 
 router = APIRouter()
@@ -109,9 +107,7 @@ async def list_crons(
         if assistant_id:
             stmt = stmt.where(CronORM.assistant_id == assistant_id)
 
-        result = await session.execute(
-            stmt
-        )
+        result = await session.execute(stmt)
         crons = result.scalars().all()
         return [Cron.model_validate(cron, from_attributes=True) for cron in crons]
     except Exception as e:
@@ -138,10 +134,7 @@ async def get_cron(
 
 
 @router.post("/cron/{cron_id}/run", response_model=CronRun)
-async def run_cron_now(
-    cron_id: str,
-    session: AsyncSession = Depends(get_session)
-):
+async def run_cron_now(cron_id: str, session: AsyncSession = Depends(get_session)):
     """Trigger a cron job to run immediately."""
     try:
         result = await session.execute(
@@ -176,6 +169,9 @@ async def list_cron_runs(
             select(CronRunORM).where(CronRunORM.cron_id == cron_id)
         )
         cron_runs = result.scalars().all()
-        return [CronRun.model_validate(cron_run, from_attributes=True) for cron_run in cron_runs]
+        return [
+            CronRun.model_validate(cron_run, from_attributes=True)
+            for cron_run in cron_runs
+        ]
     except Exception as e:
         raise HTTPException(500, f"Failed to list cron runs: {str(e)}") from e

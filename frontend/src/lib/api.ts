@@ -209,13 +209,13 @@ export async function streamRun(
           const eventType = line.substring(6).trim();
           continue;
         }
-        
+
         if (line.startsWith('data:')) {
           const data = line.substring(5).trim();
-          
+
           try {
             const parsed = JSON.parse(data);
-            
+
             // Determine event type from the data
             if (parsed.status === 'completed') {
               onMessage({ type: 'end', data: parsed });
@@ -246,9 +246,9 @@ export async function pollRun(
     const interval = setInterval(async () => {
       try {
         const run = await getRun(thread_id, run_id);
-        
+
         if (onProgress) onProgress(run);
-        
+
         if (run.status === 'completed') {
           clearInterval(interval);
           resolve(run);
@@ -335,7 +335,7 @@ export async function createCron(data: {
 
 // List cron jobs for an assistant
 export async function listCrons(assistant_id?: string): Promise<CronJob[]> {
-  const url = assistant_id 
+  const url = assistant_id
     ? `${API_BASE_URL}/api/cron?assistant_id=${assistant_id}`
     : `${API_BASE_URL}/api/cron`;
   const response = await fetch(url, {

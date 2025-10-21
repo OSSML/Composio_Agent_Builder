@@ -1,12 +1,21 @@
 """Streaming service for orchestrating SSE streaming - LangGraph Compatible"""
+
 import asyncio
 import logging
 from typing import Dict, AsyncIterator, Optional, Any
 
 from core.sse import (
     create_values_event,
-    create_end_event, create_error_event, create_messages_event, create_state_event, create_logs_event,
-    create_tasks_event, create_subgraphs_event, create_debug_event, create_metadata_event, create_events_event
+    create_end_event,
+    create_error_event,
+    create_messages_event,
+    create_state_event,
+    create_logs_event,
+    create_tasks_event,
+    create_subgraphs_event,
+    create_debug_event,
+    create_metadata_event,
+    create_events_event,
 )
 from misc.models import Run
 from misc.active_runs import active_runs
@@ -66,10 +75,12 @@ class StreamingService:
                 "messages",
                 {
                     "type": "messages_stream",
-                    "message_chunk": event_payload[0] if isinstance(event_payload, tuple) and len(
-                        event_payload) >= 1 else event_payload,
-                    "metadata": event_payload[1] if isinstance(event_payload, tuple) and len(
-                        event_payload) >= 2 else None,
+                    "message_chunk": event_payload[0]
+                    if isinstance(event_payload, tuple) and len(event_payload) >= 1
+                    else event_payload,
+                    "metadata": event_payload[1]
+                    if isinstance(event_payload, tuple) and len(event_payload) >= 2
+                    else None,
                     "node_path": node_path,
                 },
             )
@@ -85,8 +96,11 @@ class StreamingService:
                 run_id,
                 event_id,
                 "end",
-                {"type": "run_complete", "status": event_payload.get("status", "completed"),
-                 "final_output": event_payload.get("final_output")},
+                {
+                    "type": "run_complete",
+                    "status": event_payload.get("status", "completed"),
+                    "final_output": event_payload.get("final_output"),
+                },
             )
         # Add other stream modes as needed
 
@@ -110,7 +124,9 @@ class StreamingService:
 
         broker = broker_manager.get_or_create_broker(run_id)
         if broker:
-            await broker.put(event_id, ("end", {"status": "failed", "error": error_message}))
+            await broker.put(
+                event_id, ("end", {"status": "failed", "error": error_message})
+            )
 
         broker_manager.cleanup_broker(run_id)
 
@@ -122,22 +138,26 @@ class StreamingService:
             return 0
 
     async def stream_run_execution(
-            self,
-            run: Run,
-            last_event_id: Optional[str] = None,
-            cancel_on_disconnect: bool = False,
+        self,
+        run: Run,
+        last_event_id: Optional[str] = None,
+        cancel_on_disconnect: bool = False,
     ) -> AsyncIterator[str]:
         """Stream run execution with unified producer-consumer pattern"""
         run_id = run.run_id
         try:
             # -------- Replay stored events once --------
             if last_event_id:
-                stored_events = await event_store.get_events_since(run_id, last_event_id)
+                stored_events = await event_store.get_events_since(
+                    run_id, last_event_id
+                )
             else:
                 stored_events = await event_store.get_all_events(run_id)
 
             last_sent_event_id: Optional[str] = last_event_id
-            last_sent_sequence: int = self._extract_event_sequence(last_event_id) if last_event_id else 0
+            last_sent_sequence: int = (
+                self._extract_event_sequence(last_event_id) if last_event_id else 0
+            )
 
             # Replay stored events
             for ev in stored_events:
@@ -149,7 +169,9 @@ class StreamingService:
 
             # If run already finished and there's nothing new to stream, exit
             broker = broker_manager.get_or_create_broker(run_id)
-            if run.status in ["completed", "failed", "cancelled", "interrupted"] and (broker.is_finished()):
+            if run.status in ["completed", "failed", "cancelled", "interrupted"] and (
+                broker.is_finished()
+            ):
                 return
 
             # Consume live events from broker if run is still active
@@ -157,7 +179,10 @@ class StreamingService:
                 async for event_id, raw_event in broker.aiter():
                     # Skip duplicates that were already replayed - compare numeric sequences
                     current_sequence = self._extract_event_sequence(event_id)
-                    if last_sent_event_id is not None and current_sequence <= last_sent_sequence:
+                    if (
+                        last_sent_event_id is not None
+                        and current_sequence <= last_sent_sequence
+                    ):
                         continue
 
                     sse_event = await self._convert_raw_to_sse(event_id, raw_event)
@@ -175,7 +200,9 @@ class StreamingService:
                     if task and not task.done():
                         task.cancel()
                 except Exception as e:
-                    logger.warning(f"Failed to cancel background task for run {run_id} on disconnect: {e}")
+                    logger.warning(
+                        f"Failed to cancel background task for run {run_id} on disconnect: {e}"
+                    )
             raise
         except Exception as e:
             logger.error(f"Error in stream_run_execution for run {run_id}: {e}")
@@ -237,10 +264,13 @@ class StreamingService:
             logger.error(f"Error cancelling run {run_id}: {e}")
             return False
 
-    async def _update_run_status(self, run_id: str, status: str, output: Any = None, error: str = None):
+    async def _update_run_status(
+        self, run_id: str, status: str, output: Any = None, error: str = None
+    ):
         """Update run status in database using the shared updater."""
         try:
             from misc.utils import update_run_status
+
             await update_run_status(run_id, status, output, error)
         except Exception as e:
             logger.error(f"Error updating run status for {run_id}: {e}")
@@ -262,7 +292,9 @@ class StreamingService:
             metadata = ev.data.get("metadata")
             if message_chunk is None:
                 return None
-            message_data = (message_chunk, metadata) if metadata is not None else message_chunk
+            message_data = (
+                (message_chunk, metadata) if metadata is not None else message_chunk
+            )
             return create_messages_event(message_data, event_id=ev.id)
         elif ev.event == "values":
             return create_values_event(ev.data.get("chunk"), ev.id)

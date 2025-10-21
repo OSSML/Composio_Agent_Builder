@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Callable, Awaitable, Optional, Dict
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 
 from core.orm import Thread as ThreadORM, _get_session_maker, Run as RunORM
 from .active_runs import active_runs
@@ -127,10 +127,13 @@ async def execute_run_async(
     checkpoint: Optional[dict] = None,
 ):
     """Execute run asynchronously in background using streaming to capture all events"""
+
     # Normalize stream_mode once here for all callers/endpoints.
     # Accept "messages-tuple" as an alias of "messages".
     def _normalize_mode(mode):
-        return "messages" if isinstance(mode, str) and mode == "messages-tuple" else mode
+        return (
+            "messages" if isinstance(mode, str) and mode == "messages-tuple" else mode
+        )
 
     if isinstance(stream_mode, list):
         stream_mode = [_normalize_mode(m) for m in stream_mode]
@@ -156,17 +159,19 @@ async def execute_run_async(
 
             # Use streaming service's broker system to distribute events
             async for raw_event in graph.astream(
-                    input_data,
-                    config=run_config,
-                    stream_mode=stream_mode or RUN_STREAM_MODES,
-                    context=context,
+                input_data,
+                config=run_config,
+                stream_mode=stream_mode or RUN_STREAM_MODES,
+                context=context,
             ):
                 event_counter += 1
                 event_id = f"{run_id}_event_{event_counter}"
                 # Forward to broker for live consumers
                 await streaming_service.put_to_broker(run_id, event_id, raw_event)
                 # Store for replay
-                await streaming_service.store_event_from_raw(run_id, event_id, raw_event)
+                await streaming_service.store_event_from_raw(
+                    run_id, event_id, raw_event
+                )
                 # Track final output
                 if isinstance(raw_event, tuple):
                     if len(raw_event) >= 2 and raw_event[0] == "values":
@@ -181,29 +186,39 @@ async def execute_run_async(
             end_event = ("end", {"status": "completed", "final_output": final_output})
 
             await streaming_service.put_to_broker(run_id, end_event_id, end_event)
-            await streaming_service.store_event_from_raw(run_id, end_event_id, end_event)
+            await streaming_service.store_event_from_raw(
+                run_id, end_event_id, end_event
+            )
 
             # Update with results (store empty JSON to avoid serialization issues for now)
             await update_run_status(run_id, "completed", output={}, session=session)
             # Mark thread back to idle
             if not session:
-                raise RuntimeError(f"No database session available to update thread {thread_id} status")
+                raise RuntimeError(
+                    f"No database session available to update thread {thread_id} status"
+                )
             await set_thread_status(session, thread_id, "idle")
 
         except asyncio.CancelledError:
             # Store empty output to avoid JSON serialization issues
             await update_run_status(run_id, "cancelled", output={}, session=session)
             if not session:
-                raise RuntimeError(f"No database session available to update thread {thread_id} status")
+                raise RuntimeError(
+                    f"No database session available to update thread {thread_id} status"
+                )
             await set_thread_status(session, thread_id, "idle")
             # Signal cancellation to broker
             await streaming_service.signal_run_cancelled(run_id)
             raise
         except Exception as e:
             # Store empty output to avoid JSON serialization issues
-            await update_run_status(run_id, "failed", output={}, error=str(e), session=session)
+            await update_run_status(
+                run_id, "failed", output={}, error=str(e), session=session
+            )
             if not session:
-                raise RuntimeError(f"No database session available to update thread {thread_id} status")
+                raise RuntimeError(
+                    f"No database session available to update thread {thread_id} status"
+                )
             await set_thread_status(session, thread_id, "idle")
             # Signal error to broker
             await streaming_service.signal_run_error(run_id, str(e))
@@ -237,7 +252,8 @@ async def update_run_status(
         logger.info(f"[update_run_status] owns_session={owns_session}")
         logger.info(f"[update_run_status] updating DB run_id={run_id} status={status}")
         await session.execute(
-            update(RunORM).where(RunORM.run_id == str(run_id)).values(**values))  # type: ignore[arg-type]
+            update(RunORM).where(RunORM.run_id == str(run_id)).values(**values)
+        )  # type: ignore[arg-type]
         await session.commit()
         logger.info(f"[update_run_status] commit done run_id={run_id}")
     finally:

@@ -1,7 +1,3 @@
-from dotenv import load_dotenv
-import os
-load_dotenv()
-
 from sqlalchemy import create_engine
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -18,7 +14,12 @@ from services.cron_service import scheduler
 from services.event_store import event_store
 from services.langgraph_service import get_langgraph_service
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 logger = structlog.getLogger(__name__)
+
 
 async def startup_event():
     """Initialize resources on startup."""
@@ -58,6 +59,7 @@ async def shutdown_event():
 
     await db_manager.close()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan context manager for startup and shutdown events."""
@@ -68,6 +70,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown event
     await shutdown_event()
+
 
 app = FastAPI(title="Composio agent builder", lifespan=lifespan)
 
@@ -86,9 +89,11 @@ app.include_router(assistant_router, prefix="/api", tags=["assistants"])
 app.include_router(composio_router, prefix="/api", tags=["composio"])
 app.include_router(cron_router, prefix="/api", tags=["cron"])
 
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to Composio agent builder API"}
+
 
 @app.get("/health")
 def health():
@@ -97,4 +102,5 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

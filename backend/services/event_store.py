@@ -1,4 +1,5 @@
 """Persistent event store for SSE replay functionality (SQLite-backed)."""
+
 import asyncio
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -10,6 +11,7 @@ from core.sse import SSEEvent, _serialize_message_object
 from core.database import db_manager
 
 logger = logging.getLogger(__name__)
+
 
 class EventStore:
     """SQLite-backed event store for SSE replay functionality"""
@@ -159,7 +161,9 @@ class EventStore:
 
         return {
             "run_id": run_id,
-            "event_count": int(row.last_seq) - int(row.first_seq) + 1 if row.first_seq is not None else 0,
+            "event_count": int(row.last_seq) - int(row.first_seq) + 1
+            if row.first_seq is not None
+            else 0,
             "first_event_time": None,
             "last_event_time": last.created_at if last else None,
             "last_event_id": last.id if last else None,

@@ -1,9 +1,10 @@
 """LangGraph integration service with official patterns"""
+
 import json
 import os
 import importlib.util
 import logging
-from typing import Dict, Any, Optional, TypeVar
+from typing import Dict, Any, TypeVar
 from pathlib import Path
 from langgraph.graph import StateGraph
 from uuid import uuid5
@@ -95,7 +96,7 @@ class LangGraphService:
         # Fixed namespace used to derive assistant IDs from graph IDs
         NS = ASSISTANT_NAMESPACE_UUID
         session_gen = get_session()
-        session = await anext(session_gen)
+        session = await session_gen.__anext__()
         try:
             for graph_id in self._graph_registry:
                 assistant_id = str(uuid5(NS, graph_id))
@@ -230,7 +231,6 @@ class LangGraphService:
         return self.config.get("dependencies", [])
 
 
-
 # Global service instance
 _langgraph_service = None
 
@@ -245,19 +245,20 @@ def get_langgraph_service() -> LangGraphService:
 
 def create_thread_config(thread_id: str, additional_config: Dict = None) -> Dict:
     """Create LangGraph configuration for a specific thread"""
-    base_config = {
-        "configurable": {
-            "thread_id": thread_id
-        }
-    }
+    base_config = {"configurable": {"thread_id": thread_id}}
 
     if additional_config:
         base_config.update(additional_config)
 
     return base_config
 
-def create_run_config(run_id: str, thread_id: str, additional_config: Dict = None,
-                      checkpoint: Dict | None = None) -> Dict:
+
+def create_run_config(
+    run_id: str,
+    thread_id: str,
+    additional_config: Dict = None,
+    checkpoint: Dict | None = None,
+) -> Dict:
     """Create LangGraph configuration for a specific run with full context.
 
     The function is *additive*: it never removes or renames anything the client
@@ -277,6 +278,8 @@ def create_run_config(run_id: str, thread_id: str, additional_config: Dict = Non
 
     # Apply checkpoint parameters if provided
     if checkpoint and isinstance(checkpoint, dict):
-        cfg["configurable"].update({k: v for k, v in checkpoint.items() if v is not None})
+        cfg["configurable"].update(
+            {k: v for k, v in checkpoint.items() if v is not None}
+        )
 
     return cfg

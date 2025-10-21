@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 tools = None
 
-async def  fetch_tools():
+
+async def fetch_tools():
     global tools
     if tools is None:
         logger.info("Fetching tools...")
@@ -20,15 +21,10 @@ async def  fetch_tools():
             user_id=settings.USER_ID,
         )
 
-        mcpUrl = session['url']
+        mcpUrl = session["url"]
 
         client = MultiServerMCPClient(
-            {
-                "composio": {
-                    "url": mcpUrl,
-                    "transport": "streamable_http"
-                }
-            }
+            {"composio": {"url": mcpUrl, "transport": "streamable_http"}}
         )
         tools = await client.get_tools()
 

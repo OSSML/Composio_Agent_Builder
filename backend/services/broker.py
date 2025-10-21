@@ -1,9 +1,11 @@
 """Event broker for managing run-specific event queues"""
+
 import asyncio
 from typing import Any, AsyncIterator, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class RunBroker:
     """Manages event queuing and distribution for a specific run"""
@@ -17,7 +19,9 @@ class RunBroker:
     async def put(self, event_id: str, payload: Any) -> None:
         """Put an event into the broker queue"""
         if self.finished.is_set():
-            logger.warning(f"Attempted to put event {event_id} into finished broker for run {self.run_id}")
+            logger.warning(
+                f"Attempted to put event {event_id} into finished broker for run {self.run_id}"
+            )
             return
 
         await self.queue.put((event_id, payload))
@@ -31,11 +35,17 @@ class RunBroker:
         while True:
             try:
                 # Use timeout to check if run is finished
-                event_id, payload = await asyncio.wait_for(self.queue.get(), timeout=0.1)
+                event_id, payload = await asyncio.wait_for(
+                    self.queue.get(), timeout=0.1
+                )
                 yield event_id, payload
 
                 # Check if this is an end event
-                if isinstance(payload, tuple) and len(payload) >= 1 and payload[0] == "end":
+                if (
+                    isinstance(payload, tuple)
+                    and len(payload) >= 1
+                    and payload[0] == "end"
+                ):
                     break
 
             except asyncio.TimeoutError:
@@ -114,12 +124,15 @@ class BrokerManager:
             try:
                 await asyncio.sleep(300)  # Check every 5 minutes
 
-                current_time = asyncio.get_event_loop().time()
                 to_remove = []
 
                 for run_id, broker in self._brokers.items():
                     # Remove brokers that are finished and older than 1 hour
-                    if broker.is_finished() and broker.is_empty() and broker.get_age() > 3600:
+                    if (
+                        broker.is_finished()
+                        and broker.is_empty()
+                        and broker.get_age() > 3600
+                    ):
                         to_remove.append(run_id)
 
                 for run_id in to_remove:
