@@ -16,8 +16,13 @@ dependencies = [
     "langchain-openai>=0.3.35",
     "langgraph>=0.6.10",
     "langgraph-checkpoint-sqlite>=2.0.11",
-    "pre-commit>=4.3.0",
     "sqlalchemy>=2.0.44",
     "streamlit>=1.50.0",
     "structlog>=25.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.1",
 ]
