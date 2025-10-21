@@ -29,10 +29,15 @@ from misc.models import (
     RunCreate,
     RunList,
 )
-from misc.utils import set_thread_status, update_thread_metadata, execute_run_async
+from misc.utils import (
+    set_thread_status,
+    update_thread_metadata,
+    execute_run_async,
+    resolve_assistant_id,
+    _merge_jsonb,
+)
 from services.langgraph_service import get_langgraph_service, create_thread_config
 from services.streaming_service import streaming_service
-from utils import resolve_assistant_id, _merge_jsonb
 
 router = APIRouter()
 

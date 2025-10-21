@@ -10,7 +10,7 @@ from uuid import uuid5
 import structlog
 from langgraph.graph import StateGraph
 
-from constants import ASSISTANT_NAMESPACE_UUID
+from misc.constants import ASSISTANT_NAMESPACE_UUID
 from core.database import db_manager
 
 

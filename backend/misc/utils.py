@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import asyncio
-
+import copy
 from datetime import datetime, timezone
-import structlog
+from uuid import uuid5
 
+import structlog
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import TypeVar, Callable, Awaitable, Optional, Dict
+from typing import TypeVar, Callable, Awaitable, Optional, Dict, Mapping
 from fastapi import HTTPException
 
+from misc.constants import ASSISTANT_NAMESPACE_UUID
 from core.orm import Thread as ThreadORM, _get_session_maker, Run as RunORM
 from misc.active_runs import active_runs
 from services.langgraph_service import get_langgraph_service, create_run_config
@@ -260,3 +264,35 @@ async def update_run_status(
         # Close only if we created it here
         if owns_session:
             await session.close()  # type: ignore[func-returns-value]
+
+
+def resolve_assistant_id(
+    requested_id: str, available_graphs: Mapping[str, object]
+) -> str:
+    """Resolve an assistant identifier.
+
+    If the provided identifier matches a known graph id, derive a
+    deterministic assistant UUID using the project namespace. Otherwise,
+    return the identifier as-is.
+
+    Args:
+        requested_id: The value provided by the client (assistant UUID or graph id).
+        available_graphs: Graph registry mapping; only keys are used for membership.
+
+    Returns:
+        A string assistant_id suitable for DB lookups and FK references.
+    """
+    return (
+        str(uuid5(ASSISTANT_NAMESPACE_UUID, requested_id))
+        if requested_id in available_graphs
+        else requested_id
+    )
+
+
+def _merge_jsonb(*objects: dict) -> dict:
+    """Mimics PostgreSQL's JSONB merge behavior"""
+    result = {}
+    for obj in objects:
+        if obj is not None:
+            result.update(copy.deepcopy(obj))
+    return result
