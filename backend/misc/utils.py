@@ -1,7 +1,7 @@
 import asyncio
-import logging
 
 from datetime import datetime, timezone
+import structlog
 
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,14 +9,14 @@ from typing import TypeVar, Callable, Awaitable, Optional, Dict
 from fastapi import HTTPException
 
 from core.orm import Thread as ThreadORM, _get_session_maker, Run as RunORM
-from .active_runs import active_runs
+from misc.active_runs import active_runs
 from services.langgraph_service import get_langgraph_service, create_run_config
 from services.streaming_service import streaming_service
 
 T = TypeVar("T")
 RUN_STREAM_MODES = ["messages", "values", "custom"]
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 async def retry(

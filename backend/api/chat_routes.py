@@ -1,14 +1,21 @@
 import asyncio
 from datetime import datetime, timezone, UTC
-from uuid import uuid4
 from typing import List, Dict, Any
-import logging
+from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+import structlog
 
+from core.orm import (
+    Assistant as AssistantORM,
+    Thread as ThreadORM,
+    get_session,
+    Run as RunORM,
+)
+from core.sse import get_sse_headers
 from misc.active_runs import active_runs
 from misc.models import (
     Thread,
@@ -22,13 +29,6 @@ from misc.models import (
     RunCreate,
     RunList,
 )
-from core.orm import (
-    Assistant as AssistantORM,
-    Thread as ThreadORM,
-    get_session,
-    Run as RunORM,
-)
-from core.sse import get_sse_headers
 from misc.utils import set_thread_status, update_thread_metadata, execute_run_async
 from services.langgraph_service import get_langgraph_service, create_thread_config
 from services.streaming_service import streaming_service
@@ -36,7 +36,7 @@ from utils import resolve_assistant_id, _merge_jsonb
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 @router.post("/chat/new", response_model=Thread)

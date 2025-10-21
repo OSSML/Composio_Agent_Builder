@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # Database Settings
-    DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parents[2].as_posix()}/composio.db"
-    AGENT_BUILDER_MODEL: str = "google_genai/gemini-2.5-flash"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parents[1].as_posix()}/composio.db"
+    AGENT_BUILDER_MODEL: str = "openai/gpt-4.1-mini-2025-04-14"
     AGENT_TEMPLATE_MODEL: str = "openai/gpt-4.1-mini-2025-04-14"
 
     # Temporary User Credentials
@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="allow"
     )
+
+    # Env settings for logging customization
+    ENV_MODE: str = "LOCAL"
+    LOG_LEVEL: str = "INFO"
 
 
 settings = Settings()

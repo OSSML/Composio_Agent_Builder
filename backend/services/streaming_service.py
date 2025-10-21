@@ -1,8 +1,7 @@
-"""Streaming service for orchestrating SSE streaming - LangGraph Compatible"""
-
 import asyncio
-import logging
 from typing import Dict, AsyncIterator, Optional, Any
+
+import structlog
 
 from core.sse import (
     create_values_event,
@@ -19,10 +18,10 @@ from core.sse import (
 )
 from misc.models import Run
 from misc.active_runs import active_runs
-from .event_store import event_store, store_sse_event
-from .broker import broker_manager
+from services.event_store import event_store, store_sse_event
+from services.broker import broker_manager
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 class StreamingService:

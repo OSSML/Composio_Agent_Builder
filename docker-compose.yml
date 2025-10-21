@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"  # Expose the FastAPI app on port 8000
+    networks:
+      - app-network
+    depends_on:
+      - frontend
+    env_file:
+      - .env  # Load environment variables from the .env file for backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"  # Expose the React app on port 3000
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

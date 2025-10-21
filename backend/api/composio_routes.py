@@ -1,16 +1,16 @@
 from typing import List
-import logging
 
+import structlog
 from composio import Composio
 from fastapi import APIRouter, HTTPException, Body
 
 from core.config import settings
 
-composio = Composio()
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
+composio = Composio()
+logger = structlog.getLogger(__name__)
 
 
 @router.post("/tools/connect", response_model=List[str])

@@ -1,8 +1,3 @@
-"""Define a custom Reasoning and Action agent.
-
-Works with a chat model with tool calling support.
-"""
-
 from typing import Literal, cast, Dict, List
 
 from dotenv import load_dotenv
@@ -11,11 +6,11 @@ from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 
 from agents.agent_builder.state import InputState, State
-from core.tool_router import fetch_tools
-from core.config import settings
 from agents.agent_builder.utils import load_chat_model
 from agents.agent_builder.prompts import SYSTEM_PROMPT
 from agents.agent_builder.models import BuilderResponse
+from core.config import settings
+from core.tool_router import fetch_tools
 
 load_dotenv()
 

@@ -1,5 +1,3 @@
-"""Define the configurable parameters for the agent."""
-
 from __future__ import annotations
 
 import os

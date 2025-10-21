@@ -1,12 +1,12 @@
 from composio import Composio
 from dotenv import load_dotenv
-import logging
+import structlog
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from .config import settings
+from core.config import settings
 
 load_dotenv()
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 tools = None
 

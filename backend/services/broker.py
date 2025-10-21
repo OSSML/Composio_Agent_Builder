@@ -2,9 +2,9 @@
 
 import asyncio
 from typing import Any, AsyncIterator, Tuple
-import logging
+import structlog
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 class RunBroker:

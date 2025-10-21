@@ -1,16 +1,17 @@
 """Persistent event store for SSE replay functionality (SQLite-backed)."""
 
 import asyncio
-from typing import Dict, List, Optional
 from datetime import datetime
-import logging
-
-from sqlalchemy import text
 import json
+from typing import Dict, List, Optional
+
+import structlog
+from sqlalchemy import text
+
 from core.sse import SSEEvent, _serialize_message_object
 from core.database import db_manager
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 class EventStore:

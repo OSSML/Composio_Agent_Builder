@@ -1,18 +1,18 @@
 from uuid import uuid4
 from typing import List
-import logging
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+import structlog
 
-from misc.models import AssistantCreate, Assistant
 from core.orm import Assistant as AssistantORM, get_session
+from misc.models import AssistantCreate, Assistant
 from services.langgraph_service import get_langgraph_service
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 def to_pydantic(row: AssistantORM) -> Assistant:

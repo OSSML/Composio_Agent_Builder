@@ -1,11 +1,11 @@
 from datetime import datetime, UTC
-import logging
 
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from croniter import croniter
 from langchain_core.messages import HumanMessage
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+import structlog
 
 from core.orm import (
     Assistant as AssistantORM,
@@ -14,9 +14,9 @@ from core.orm import (
     _get_session_maker,
 )
 from misc.models import Cron, CronRun
-from .langgraph_service import get_langgraph_service
+from services.langgraph_service import get_langgraph_service
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
@@ -44,7 +44,7 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
 
             user_prompt = (
                 f"required_fields: {cron_job.required_fields}, \nspecial_instructions: {cron_job.special_instructions}"
-                f"You don't need to create the plan for the task, since the plan is already present in the prompt. You can create plan only if you find it necessary to complete the task."
+                f"\nYou don't need to create the plan for the task, since the plan is already present in the prompt. You can create plan only if you find it necessary to complete the task."
                 f"\nPlease complete the task as per the required fields and special instructions. And output if the task was completed successfully or not."
                 f"Do not quit until the task is completed, there will be no human assistance for this run. This is a cron job, so you must complete the task on your own. "
                 f"Output must contain final status of the task and any relevant details. Do not ask for any clarifications."
@@ -57,7 +57,6 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
                 input, {"recursion_limit": 30}, context=assistant.context
             )
             output = response["messages"][-1].content
-            logger.info(response)
             for messages in response["messages"]:
                 logger.info(f"  - Message: {messages.content}")
             output = {"status": "completed", "output": output}
@@ -147,5 +146,5 @@ scheduler = AsyncIOScheduler()
 # Job 1: Check every minute to see if a cron needs to be scheduled
 scheduler.add_job(check_and_schedule_cron_jobs, "interval", minutes=1)
 
-# Job 2: Check every 10 seconds to see if there are scheduled jobs to run
-scheduler.add_job(run_scheduled_jobs, "interval", seconds=10)
+# Job 2: Check every 30 seconds to see if there are scheduled jobs to run
+scheduler.add_job(run_scheduled_jobs, "interval", seconds=30)

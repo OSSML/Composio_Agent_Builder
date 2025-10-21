@@ -13,11 +13,9 @@ from misc.active_runs import active_runs
 from services.cron_service import scheduler
 from services.event_store import event_store
 from services.langgraph_service import get_langgraph_service
+from misc.setup_logging import setup_logging
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
+setup_logging()
 logger = structlog.getLogger(__name__)
 
 
@@ -31,6 +29,7 @@ async def startup_event():
     URL = settings.DATABASE_URL.replace("sqlite+aiosqlite", "sqlite")
     engine = create_engine(URL)
 
+    # Create the necessary tables for the database. (If not present)
     Base.metadata.create_all(engine)
 
     # Initialize LangGraph service
@@ -77,7 +76,7 @@ app = FastAPI(title="Composio agent builder", lifespan=lifespan)
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,17 +1,17 @@
-from typing import List
-import logging
 from datetime import datetime, UTC
+from typing import List
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import structlog
 
-from misc.models import Cron, CronCreate, CronUpdate, CronRun
 from core.orm import Cron as CronORM, CronRun as CronRunORM, get_session
+from misc.models import Cron, CronCreate, CronUpdate, CronRun
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 
 @router.post("/cron", response_model=Cron)

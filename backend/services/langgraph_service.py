@@ -3,17 +3,18 @@
 import json
 import os
 import importlib.util
-import logging
 from typing import Dict, Any, TypeVar
 from pathlib import Path
-from langgraph.graph import StateGraph
 from uuid import uuid5
+
+import structlog
+from langgraph.graph import StateGraph
 
 from constants import ASSISTANT_NAMESPACE_UUID
 from core.database import db_manager
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger(__name__)
 
 State = TypeVar("State")
 
@@ -21,8 +22,8 @@ State = TypeVar("State")
 class LangGraphService:
     """Service to work with LangGraph CLI configuration and graphs"""
 
-    def __init__(self, config_path: str = "aegra.json"):
-        # Default path can be overridden via AEGRA_CONFIG or by placing aegra.json
+    def __init__(self, config_path: str = "langgraph.json"):
+        # Default path can be overridden via LANGGRAPH_CONFIG or by placing langgraph.json
         self.config_path = Path(config_path)
         self.config: dict[str, Any] | None = None
         self._graph_registry: dict[str, Any] = {}
@@ -32,13 +33,12 @@ class LangGraphService:
         """Load configuration file and setup graph registry.
 
         Resolution order:
-        1) AEGRA_CONFIG env var (absolute or relative path)
+        1) LANGGRAPH_CONFIG env var (absolute or relative path)
         2) Explicit self.config_path if it exists
-        3) aegra.json in CWD
         4) langgraph.json in CWD (fallback)
         """
         # 1) Env var override
-        env_path = os.getenv("AEGRA_CONFIG")
+        env_path = os.getenv("LANGGRAPH_CONFIG")
         resolved_path: Path
         if env_path:
             resolved_path = Path(env_path)
@@ -51,7 +51,7 @@ class LangGraphService:
         if not resolved_path.exists():
             raise ValueError(
                 "Configuration file not found. Expected one of: "
-                "AEGRA_CONFIG path, ./aegra.json, or ./langgraph.json"
+                "LANGGRAPH_CONFIG path or ./langgraph.json"
             )
 
         # Persist selected path for later reference
@@ -68,7 +68,7 @@ class LangGraphService:
         await self._ensure_default_assistants()
 
     def _load_graph_registry(self):
-        """Load graph definitions from aegra.json"""
+        """Load graph definitions from langgraph.json"""
         graphs_config = self.config.get("graphs", {})
 
         for graph_id, graph_path in graphs_config.items():
@@ -88,6 +88,7 @@ class LangGraphService:
         Uses uuid5 with a fixed namespace so that the same graph_id maps
         to the same assistant_id across restarts. Idempotent.
         """
+        # Local imports, since the function gets called only once.
         from sqlalchemy import select
 
         from core.orm import Assistant as AssistantORM
@@ -141,7 +142,7 @@ class LangGraphService:
             # a Postgres checkpointer for durable state.
             checkpointer_cm = await db_manager.get_checkpointer()
             store_cm = await db_manager.get_store()
-            logger.info(f"🔧 Compiling graph '{graph_id}' with Postgres persistence")
+            logger.info(f"Compiling graph '{graph_id}' with Postgres persistence")
             compiled_graph = base_graph.compile(
                 checkpointer=checkpointer_cm, store=store_cm
             )
@@ -158,7 +159,7 @@ class LangGraphService:
             except Exception:
                 # Fallback: property may be immutably set; run as-is with warning
                 logger.warning(
-                    f"⚠️  Pre-compiled graph '{graph_id}' does not support checkpointer injection; running without persistence"
+                    f"Pre-compiled graph '{graph_id}' does not support checkpointer injection; running without persistence"
                 )
                 compiled_graph = base_graph
 
