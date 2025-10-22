@@ -24,7 +24,7 @@ async def connect_tools(
             auth_configs = composio.auth_configs.list(toolkit_slug=tool)
             if auth_configs.total_items == 0:
                 tool_details = composio.toolkits.get(slug=tool)
-                if tool_details.auth_config_details[0].mode == 'NO_AUTH':
+                if tool_details.auth_config_details[0].mode == "NO_AUTH":
                     output.append("connected")
                     continue
                 output.append(

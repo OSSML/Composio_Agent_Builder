@@ -114,8 +114,7 @@ async def list_assistants(session: AsyncSession = Depends(get_session)):
 
 @router.get("/assistants/{assistant_id}", response_model=MinimalAssistant)
 async def get_assistant(
-    assistant_id: str,
-    session: AsyncSession = Depends(get_session)
+    assistant_id: str, session: AsyncSession = Depends(get_session)
 ):
     """Get assistant by ID for export purpose"""
     stmt = select(AssistantORM).where(AssistantORM.assistant_id == assistant_id)

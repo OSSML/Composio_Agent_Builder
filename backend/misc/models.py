@@ -77,6 +77,7 @@ class AssistantSearchRequest(BaseModel):
 
 class MinimalAssistant(BaseModel):
     """Minimal assistant model for export and import"""
+
     name: str
     description: str | None = None
     config: dict[str, Any] = Field(default_factory=dict)

@@ -59,7 +59,9 @@ async def call_model(
     return {"messages": [response]}
 
 
-async def execute_tools(state: State, runtime: Runtime[Context]) -> Dict[str, List[BaseMessage]]:
+async def execute_tools(
+    state: State, runtime: Runtime[Context]
+) -> Dict[str, List[BaseMessage]]:
     """Execute tools dynamically based on the current context.
 
     This node gets the tool calls from the last AI message and executes them
