@@ -86,6 +86,9 @@ def get_logging_config() -> dict[str, Any]:
             "httpx": {
                 "level": "WARNING",
             },
+            "apscheduler": {
+                "level": "WARNING",
+            },
         },
     }
 
@@ -109,6 +112,7 @@ def setup_logging():
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
     # Configure structlog to route its logs through the standard logging
     # system that we just configured.

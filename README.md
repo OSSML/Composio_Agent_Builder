@@ -109,7 +109,7 @@ flowchart TD
 ### Task Description:
 > “Fetch latest news of the given company and draft the summary in google docs”
 
-### Created Plan:
+### Created Plan (using Tool Router):
 
 1. Use the `COMPOSIO_SEARCH_NEWS` tool to search for the most recent news articles related to the given company. Use a relevant time filter such as the past day or week to ensure up-to-date news.
 2. Analyze and summarize the retrieved news articles to create a clear, informative summary.
