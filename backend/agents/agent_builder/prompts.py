@@ -30,9 +30,11 @@ class BuilderResponse(BaseModel):
     '''Response model for agent builder'''
     system_prompt: str = Field(..., description="The system prompt for the agent")
     tool_kits: list[str] = Field(..., description="The tool kits required for the agent.")
+    tools: list[str] = Field(..., description="The tools required for the agent.")
     required_fields: list[RequiredField] = Field(..., description="The crucial fields the agent needs from the user to run without human intervention.")
 ```
 The tool_kits field must contain name of the toolkits, not the name of the tools inside them. The tool kits name are shorter and more general.
+The tools field must contain the name of the tools inside the toolkits.
 
 ### Restrictions
   - Do not try to call any tools yourself. Your job is to create the configuration for another agent that will do so.

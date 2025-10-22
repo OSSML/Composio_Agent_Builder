@@ -30,7 +30,7 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
     logger.info(f"  - Required Fields: {cron_job.required_fields}")
     try:
         maker = _get_session_maker()
-        async with maker() as session:
+        async with (maker() as session):
             assistant_id = cron_job.assistant_id
             assistant_stmt = select(AssistantORM).where(
                 AssistantORM.assistant_id == assistant_id,
@@ -46,12 +46,18 @@ async def run_cron_job(cron_run: CronRun, cron_job: Cron) -> dict:
                 f"required_fields: {cron_job.required_fields}, \nspecial_instructions: {cron_job.special_instructions}"
                 f"\nYou don't need to create the plan for the task, since the plan is already present in the prompt. You can create plan only if you find it necessary to complete the task."
                 f"\nPlease complete the task as per the required fields and special instructions. And output if the task was completed successfully or not."
-                f"Do not quit until the task is completed, there will be no human assistance for this run. This is a cron job, so you must complete the task on your own. "
-                f"Output must contain final status of the task and any relevant details. Do not ask for any clarifications."
+                f"\n Execute the task to completion without any interruptions or requests for clarification. This is a cron job, and you are expected to carry out the entire process independently. " +
+                f"Ensure the final output includes the complete status of the task and any relevant details. Do not seek approval or ask for confirmations at any point."
             )
             input = {
                 "messages": [HumanMessage(content=user_prompt)],
             }
+            context = assistant.context
+
+            context["system_prompt"] = (context["system_prompt"] +
+                f"\n Execute the task to completion without any interruptions or requests for clarification. This is a cron job, and you are expected to carry out the entire process independently. " +
+                f"Ensure the final output includes the complete status of the task and any relevant details. Do not seek approval or ask for confirmations at any point."
+            )
 
             response = await graph.ainvoke(
                 input, {"recursion_limit": 30}, context=assistant.context

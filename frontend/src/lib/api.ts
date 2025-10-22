@@ -80,6 +80,7 @@ export async function createAssistant(data: {
   description?: string;
   context?: Record<string, any>;
   tool_kits?: string[];
+  tools?: string[];
   required_fields?: RequiredField[];
 }): Promise<Assistant> {
   const response = await fetch(`${API_BASE_URL}/api/assistants`, {
@@ -91,6 +92,15 @@ export async function createAssistant(data: {
     body: JSON.stringify(data)
   });
   if (!response.ok) throw new Error('Failed to create assistant');
+  return response.json();
+}
+
+// Get a single assistant's details
+export async function getAssistant(assistant_id: string): Promise<Assistant> {
+  const response = await fetch(`${API_BASE_URL}/api/assistants/${assistant_id}`, {
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!response.ok) throw new Error('Failed to fetch assistant');
   return response.json();
 }
 

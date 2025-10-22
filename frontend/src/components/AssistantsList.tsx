@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Assistant, listAssistants } from '../lib/api';
+import { useEffect, useState, useRef } from 'react';
+import { Assistant, listAssistants, createAssistant } from '../lib/api';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Bot, Plus, Loader2 } from 'lucide-react';
+import { Bot, Plus, Loader2, Upload } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { toast } from 'sonner';
 
 interface AssistantsListProps {
   onSelectAssistant: (assistant: Assistant) => void;
@@ -13,7 +14,9 @@ interface AssistantsListProps {
 export function AssistantsList({ onSelectAssistant, onCreateNew }: AssistantsListProps) {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAssistants();
@@ -38,6 +41,51 @@ export function AssistantsList({ onSelectAssistant, onCreateNew }: AssistantsLis
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const fileContent = e.target?.result;
+        if (typeof fileContent !== 'string') {
+          throw new Error('Could not read file content.');
+        }
+        const data = JSON.parse(fileContent);
+
+        // Remove read-only fields before sending to create API
+        const { assistant_id, created_at, updated_at, ...createData } = data;
+
+        if (!createData.graph_id || !createData.name) {
+            throw new Error('Imported file is missing required fields like name or graph_id.');
+        }
+
+        await createAssistant(createData);
+        toast.success(`Successfully imported assistant: ${createData.name}`);
+        await loadAssistants(); // Refresh the list
+      } catch (err) {
+        toast.error(`Import failed: ${(err as Error).message}`);
+      } finally {
+        setIsImporting(false);
+        // Reset input to allow re-uploading the same file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.onerror = () => {
+      setIsImporting(false);
+      toast.error('Error reading the selected file.');
+    };
+    reader.readAsText(file);
   };
 
   if (loading) {
@@ -68,10 +116,24 @@ export function AssistantsList({ onSelectAssistant, onCreateNew }: AssistantsLis
           <h1 className="mb-1">Composio Agent Builder</h1>
           <p className="text-sm text-gray-600">Manage and chat with your AI agents</p>
         </div>
-        <Button onClick={onCreateNew}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Agent
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleImportClick} disabled={isImporting}>
+                {isImporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                Import Agent
+            </Button>
+            <Button onClick={onCreateNew}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Agent
+            </Button>
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                className="hidden"
+                accept="application/json"
+                onChange={handleFileChange}
+            />
+        </div>
       </div>
 
       {assistants.length === 0 ? (

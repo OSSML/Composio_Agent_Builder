@@ -1,6 +1,5 @@
 from typing import Literal, cast, Dict, List
 
-from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
@@ -11,8 +10,6 @@ from agents.agent_builder.prompts import SYSTEM_PROMPT
 from agents.agent_builder.models import BuilderResponse
 from core.config import settings
 from core.tool_router import fetch_tools
-
-load_dotenv()
 
 
 async def call_model(state: State) -> dict[str, list[AIMessage]]:

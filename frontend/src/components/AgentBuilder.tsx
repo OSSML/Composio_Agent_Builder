@@ -14,6 +14,7 @@ interface AgentBuilderProps {
 interface AgentConfig {
   system_prompt: string;
   tool_kits: string[];
+  tools: string[];
   required_fields: RequiredField[];
 }
 
@@ -84,6 +85,7 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
             const parsed = JSON.parse(content);
             setAgentConfig({
               system_prompt: parsed.system_prompt || '',
+              tools: parsed.tools || [],
               tool_kits: parsed.tool_kits || [],
               required_fields: parsed.required_fields || []
             });
@@ -120,7 +122,8 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
         name: taskName,
         description: taskDescription,
         context: {
-          system_prompt: agentConfig.system_prompt
+          system_prompt: agentConfig.system_prompt,
+          tools: agentConfig.tools,
         },
         tool_kits: agentConfig.tool_kits,
         required_fields: agentConfig.required_fields

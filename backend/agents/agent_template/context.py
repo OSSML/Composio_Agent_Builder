@@ -15,6 +15,13 @@ class Context:
         },
     )
 
+    tools: list = field(
+        metadata={
+            "description": "A list of tools to use for the agent's interactions. "
+            "Each tool is a string representing the slug of the tool."
+        },
+    )
+
     def __post_init__(self) -> None:
         """Fetch env vars for attributes that were not passed as args."""
         for f in fields(self):

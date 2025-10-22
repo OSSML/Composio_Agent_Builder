@@ -75,6 +75,16 @@ class AssistantSearchRequest(BaseModel):
     offset: int | None = Field(0, ge=0, description="Results offset")
 
 
+class MinimalAssistant(BaseModel):
+    """Minimal assistant model for export and import"""
+    name: str
+    description: str | None = None
+    config: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
+    tool_kits: list[str] = Field(default_factory=list)
+    required_fields: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class ThreadCreate(BaseModel):
     """Request model for creating threads"""
 

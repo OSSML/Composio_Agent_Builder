@@ -81,7 +81,7 @@ def get_logging_config() -> dict[str, Any]:
                 "level": "INFO",
             },
             "uvicorn.access": {
-                "level": "WARNING",
+                "level": "INFO",
             },
             "httpx": {
                 "level": "WARNING",
@@ -106,7 +106,7 @@ def setup_logging():
         logging.getLogger(name).propagate = True
 
     # Reconfigure log levels for some overly chatty libraries
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 

@@ -21,6 +21,7 @@ class BuilderResponse(BaseModel):
     tool_kits: list[str] = Field(
         ..., description="The tool kits required for the agent."
     )
+    tools: list[str] = Field(..., description="The tools required for the agent.")
     required_fields: list[RequiredField] = Field(
         ...,
         description="The crucial fields the agent needs from the user to run without human intervention.",

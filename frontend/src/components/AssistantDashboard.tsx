@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Assistant,
+  getAssistant,
   CronJob,
   CronRun,
   listCrons,
@@ -66,6 +67,7 @@ import {
   XCircle,
   MessageSquare,
   Maximize2,
+  Download,
   ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -566,6 +568,26 @@ export function AssistantDashboard({ assistant, onBack, onOpenChat }: AssistantD
     }
   };
 
+  const handleExportAssistant = async () => {
+    try {
+      const assistantData = await getAssistant(assistant.assistant_id);
+      const jsonString = JSON.stringify(assistantData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${assistant.name.replace(/\s+/g, '_').toLowerCase()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Assistant exported successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export assistant.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -583,14 +605,20 @@ export function AssistantDashboard({ assistant, onBack, onOpenChat }: AssistantD
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Assistants
           </Button>
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
               <h1 className="mb-1">{assistant.name}</h1>
               <p className="text-gray-600">{assistant.description}</p>
             </div>
-            <Badge variant="secondary">Dashboard</Badge>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="secondary">Dashboard</Badge>
+              <Button variant="outline" size="sm" onClick={handleExportAssistant}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
-        </div>
+      </div>
 
         {/* Tabs */}
         <Tabs

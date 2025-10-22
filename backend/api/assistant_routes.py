@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
 from core.orm import Assistant as AssistantORM, get_session
-from misc.models import AssistantCreate, Assistant
+from misc.models import AssistantCreate, Assistant, MinimalAssistant
 from services.langgraph_service import get_langgraph_service
 
 router = APIRouter()
@@ -110,3 +110,17 @@ async def list_assistants(session: AsyncSession = Depends(get_session)):
     result = await session.scalars(stmt)
     user_assistants = [to_pydantic(a) for a in result.all()]
     return user_assistants
+
+
+@router.get("/assistants/{assistant_id}", response_model=MinimalAssistant)
+async def get_assistant(
+    assistant_id: str,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get assistant by ID for export purpose"""
+    stmt = select(AssistantORM).where(AssistantORM.assistant_id == assistant_id)
+    result = await session.execute(stmt)
+    assistant = result.scalars().first()
+    if not assistant:
+        raise HTTPException(404, "Assistant not found")
+    return MinimalAssistant.model_validate(assistant, from_attributes=True)

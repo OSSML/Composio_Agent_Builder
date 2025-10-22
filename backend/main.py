@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine
+import pathlib
+
+from sqlalchemy import create_engine, inspect
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,10 +12,11 @@ from core.config import settings
 from core.orm import Base
 from core.tool_router import fetch_tools
 from misc.active_runs import active_runs
+from misc.setup_logging import setup_logging
 from services.cron_service import scheduler
 from services.event_store import event_store
 from services.langgraph_service import get_langgraph_service
-from misc.setup_logging import setup_logging
+from services.seed_agents import seed_agents
 
 setup_logging()
 logger = structlog.getLogger(__name__)
@@ -29,8 +32,18 @@ async def startup_event():
     URL = settings.DATABASE_URL.replace("sqlite+aiosqlite", "sqlite")
     engine = create_engine(URL)
 
+    empty_database = False
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+    if not table_names:
+        logger.info("Database is empty. Seeding default agents...")
+        empty_database = True
+
     # Create the necessary tables for the database. (If not present)
     Base.metadata.create_all(engine)
+
+    if empty_database:
+        await seed_agents(pathlib.Path(__file__).parent / "default_agents")
 
     # Initialize LangGraph service
     langgraph_service = get_langgraph_service()
@@ -102,4 +115,4 @@ def health():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

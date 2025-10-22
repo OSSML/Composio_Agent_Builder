@@ -1,6 +1,5 @@
 from typing import Literal, cast, Dict, List
 
-from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
@@ -10,10 +9,7 @@ from agents.agent_template.context import Context
 from core.config import settings
 from agents.agent_template.utils import load_chat_model
 from agents.agent_template.state import InputState, State
-from core.tool_router import fetch_tools
-
-
-load_dotenv()
+from agents.agent_template.tools import fetch_tools
 
 
 async def call_model(
@@ -33,9 +29,7 @@ async def call_model(
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = load_chat_model(settings.AGENT_TEMPLATE_MODEL)
 
-    tools = await fetch_tools()
-
-    # tools = [tool for tool in tools if tool.name == "COMPOSIO_MULTI_EXECUTE_TOOL"]
+    tools = fetch_tools(runtime.context.tools)
 
     model = model.bind_tools(tools)
 
@@ -65,7 +59,7 @@ async def call_model(
     return {"messages": [response]}
 
 
-async def execute_tools(state: State) -> Dict[str, List[BaseMessage]]:
+async def execute_tools(state: State, runtime: Runtime[Context]) -> Dict[str, List[BaseMessage]]:
     """Execute tools dynamically based on the current context.
 
     This node gets the tool calls from the last AI message and executes them
@@ -84,7 +78,7 @@ async def execute_tools(state: State) -> Dict[str, List[BaseMessage]]:
         return {}
 
     # Get the actual tool functions from the map
-    selected_tools = await fetch_tools()
+    selected_tools = fetch_tools(runtime.context.tools)
 
     # Only keep execution tool
     # selected_tools = [tool for tool in selected_tools if tool.name == "COMPOSIO_MULTI_EXECUTE_TOOL"]
