@@ -19,7 +19,7 @@ async def seed_agents(directory_path: pathlib.Path):
                     context=agent["context"],
                     tool_kits=agent["tool_kits"],
                     required_fields=agent["required_fields"],
-                    graph_id="agent_template",
+                    graph_id=agent["graph_id"],
                 )
                 session.add(assistant)
         await session.commit()

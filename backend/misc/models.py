@@ -80,8 +80,8 @@ class MinimalAssistant(BaseModel):
 
     name: str
     description: str | None = None
+    graph_id: str
     config: dict[str, Any] = Field(default_factory=dict)
-    context: dict[str, Any] = Field(default_factory=dict)
     tool_kits: list[str] = Field(default_factory=list)
     required_fields: list[dict[str, Any]] = Field(default_factory=list)
 
