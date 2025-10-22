@@ -16,7 +16,7 @@ async def seed_agents(directory_path: pathlib.Path):
                     name=agent["name"],
                     description=agent["description"],
                     config=agent["config"],
-                    context=agent["context"],
+                    context=agent["config"].get("configurable", None),
                     tool_kits=agent["tool_kits"],
                     required_fields=agent["required_fields"],
                     graph_id=agent["graph_id"],
