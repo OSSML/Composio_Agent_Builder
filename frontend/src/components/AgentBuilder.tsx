@@ -4,11 +4,12 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import {ArrowLeft, Loader2, Sparkles} from 'lucide-react';
 import { createThread, createRun, pollRun, getThreadHistory, createAssistant, RequiredField } from '../lib/api';
 
 interface AgentBuilderProps {
   onAgentCreated: (assistantId: string) => void;
+  onBack: () => void;
 }
 
 interface AgentConfig {
@@ -18,7 +19,7 @@ interface AgentConfig {
   required_fields: RequiredField[];
 }
 
-export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
+export function AgentBuilder({ onAgentCreated, onBack }: AgentBuilderProps) {
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -145,6 +146,9 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="flex items-center gap-3 mb-6">
+          <Button variant="ghost" onClick={onBack} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+          </Button>
           <Sparkles className="w-8 h-8 text-purple-500" />
           <div>
             <h2>Review Generated Plan</h2>
@@ -263,6 +267,9 @@ export function AgentBuilder({ onAgentCreated }: AgentBuilderProps) {
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3 mb-6">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+        </Button>
         <Sparkles className="w-8 h-8 text-purple-500" />
         <div>
           <h1>Composio Agent Builder</h1>

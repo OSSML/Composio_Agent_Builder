@@ -38,7 +38,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       {currentView === 'builder' && (
-        <AgentBuilder onAgentCreated={handleAgentCreated} />
+        <AgentBuilder
+            onAgentCreated={handleAgentCreated}
+            onBack={handleBackToList}
+        />
       )}
 
       {currentView === 'list' && (
